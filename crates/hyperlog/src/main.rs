@@ -11,9 +11,14 @@ use sqlx::{Pool, Postgres};
 use tower_http::trace::TraceLayer;
 
 pub mod commander;
+pub mod querier;
+
 pub mod engine;
 pub mod events;
 pub mod log;
+pub mod shared_engine;
+pub mod state;
+pub mod storage;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None, subcommand_required = true)]
@@ -28,6 +33,29 @@ enum Commands {
         #[arg(env = "SERVICE_HOST", long, default_value = "127.0.0.1:3000")]
         host: SocketAddr,
     },
+
+    CreateRoot {
+        #[arg(long = "root")]
+        root: String,
+    },
+
+    CreateSection {
+        #[arg(long = "root")]
+        root: String,
+
+        #[arg(long = "path")]
+        path: Option<String>,
+    },
+
+    Get {
+        #[arg(long = "root")]
+        root: String,
+
+        #[arg(long = "path")]
+        path: Option<String>,
+    },
+
+    Info {},
 }
 
 #[tokio::main]
@@ -37,37 +65,72 @@ async fn main() -> anyhow::Result<()> {
 
     let cli = Command::parse();
 
-    if let Some(Commands::Serve { host }) = cli.command {
-        tracing::info!("Starting service");
+    let state = state::State::new()?;
 
-        let state = SharedState(Arc::new(State::new().await?));
+    match cli.command {
+        Some(Commands::Serve { host }) => {
+            tracing::info!("Starting service");
 
-        let app = Router::new()
-            .route("/", get(root))
-            .with_state(state.clone())
-            .layer(
-                TraceLayer::new_for_http().make_span_with(|request: &Request<_>| {
-                    // Log the matched route's path (with placeholders not filled in).
-                    // Use request.uri() or OriginalUri if you want the real path.
-                    let matched_path = request
-                        .extensions()
-                        .get::<MatchedPath>()
-                        .map(MatchedPath::as_str);
+            let state = SharedState(Arc::new(State::new().await?));
 
-                    tracing::info_span!(
-                        "http_request",
-                        method = ?request.method(),
-                        matched_path,
-                        some_other_field = tracing::field::Empty,
-                    )
-                }), // ...
+            let app = Router::new()
+                .route("/", get(root))
+                .with_state(state.clone())
+                .layer(
+                    TraceLayer::new_for_http().make_span_with(|request: &Request<_>| {
+                        // Log the matched route's path (with placeholders not filled in).
+                        // Use request.uri() or OriginalUri if you want the real path.
+                        let matched_path = request
+                            .extensions()
+                            .get::<MatchedPath>()
+                            .map(MatchedPath::as_str);
+
+                        tracing::info_span!(
+                            "http_request",
+                            method = ?request.method(),
+                            matched_path,
+                            some_other_field = tracing::field::Empty,
+                        )
+                    }), // ...
+                );
+
+            tracing::info!("listening on {}", host);
+            let listener = tokio::net::TcpListener::bind(host).await.unwrap();
+            axum::serve(listener, app.into_make_service())
+                .await
+                .unwrap();
+        }
+        Some(Commands::CreateRoot { root }) => state
+            .commander
+            .execute(commander::Command::CreateRoot { root })?,
+        Some(Commands::CreateSection { root, path }) => {
+            state.commander.execute(commander::Command::CreateSection {
+                root,
+                path: path
+                    .unwrap_or_default()
+                    .split('.')
+                    .map(|s| s.to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect::<Vec<String>>(),
+            })?
+        }
+        Some(Commands::Get { root, path }) => {
+            let res = state.querier.get(
+                &root,
+                path.unwrap_or_default()
+                    .split('.')
+                    .filter(|s| !s.is_empty()),
             );
 
-        tracing::info!("listening on {}", host);
-        let listener = tokio::net::TcpListener::bind(host).await.unwrap();
-        axum::serve(listener, app.into_make_service())
-            .await
-            .unwrap();
+            let output = serde_json::to_string_pretty(&res)?;
+
+            println!("{}", output);
+        }
+        Some(Commands::Info {}) => {
+            println!("graph stored at: {}", state.storage.info()?)
+        }
+
+        None => {}
     }
 
     Ok(())

@@ -1,4 +1,4 @@
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use bus::{Bus, BusReader};
 
@@ -9,8 +9,9 @@ pub enum Event {
     CommandEvent { command: Command },
 }
 
+#[derive(Clone)]
 pub struct Events {
-    bus: Mutex<Bus<Event>>,
+    bus: Arc<Mutex<Bus<Event>>>,
 }
 
 impl Default for Events {
@@ -18,7 +19,7 @@ impl Default for Events {
         let bus = Bus::new(10);
 
         Self {
-            bus: Mutex::new(bus),
+            bus: Arc::new(Mutex::new(bus)),
         }
     }
 }

@@ -1,11 +1,12 @@
-use std::{collections::BTreeMap, sync::RwLock};
+use std::collections::BTreeMap;
 
 use serde::Serialize;
 
 use crate::{
-    engine::Engine,
     events::Events,
     log::{GraphItem, ItemState},
+    shared_engine::SharedEngine,
+    storage::Storage,
 };
 
 #[derive(Serialize, PartialEq, Eq, Debug, Clone)]
@@ -31,22 +32,30 @@ pub enum Command {
     },
 }
 
-#[derive(Default)]
 pub struct Commander {
-    engine: RwLock<Engine>,
+    engine: SharedEngine,
+    storage: Storage,
     events: Events,
 }
 
 impl Commander {
+    pub fn new(engine: SharedEngine, storage: Storage, events: Events) -> anyhow::Result<Self> {
+        Ok(Self {
+            engine,
+            storage,
+            events,
+        })
+    }
+
     pub fn execute(&self, cmd: Command) -> anyhow::Result<()> {
         tracing::debug!("executing event: {}", serde_json::to_string(&cmd)?);
 
-        match cmd {
+        match cmd.clone() {
             Command::CreateRoot { root } => {
-                self.engine.write().unwrap().create_root(&root)?;
+                self.engine.create_root(&root)?;
             }
             Command::CreateSection { root, path } => {
-                self.engine.write().unwrap().create(
+                self.engine.create(
                     &root,
                     &path.iter().map(|p| p.as_str()).collect::<Vec<_>>(),
                     GraphItem::Section(BTreeMap::default()),
@@ -58,7 +67,7 @@ impl Commander {
                 title,
                 description,
                 state,
-            } => self.engine.write().unwrap().create(
+            } => self.engine.create(
                 &root,
                 &path.iter().map(|p| p.as_str()).collect::<Vec<_>>(),
                 GraphItem::Item {
@@ -67,12 +76,16 @@ impl Commander {
                     state,
                 },
             )?,
-            Command::Move { root, src, dest } => self.engine.write().unwrap().section_move(
+            Command::Move { root, src, dest } => self.engine.section_move(
                 &root,
                 &src.iter().map(|p| p.as_str()).collect::<Vec<_>>(),
                 &dest.iter().map(|p| p.as_str()).collect::<Vec<_>>(),
             )?,
         }
+
+        self.storage.store(&self.engine)?;
+
+        self.events.enque_command(cmd)?;
 
         Ok(())
     }

@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, fmt::Display};
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 
 use crate::log::{Graph, GraphItem};
 
@@ -10,6 +10,16 @@ pub struct Engine {
 }
 
 impl Engine {
+    pub fn engine_from_str(input: &str) -> anyhow::Result<Self> {
+        let graph: Graph = serde_json::from_str(input)?;
+
+        Ok(Self { graph })
+    }
+
+    pub fn to_str(&self) -> anyhow::Result<String> {
+        serde_json::to_string_pretty(&self.graph).context("failed to serialize graph")
+    }
+
     pub fn create_root(&mut self, root: &str) -> anyhow::Result<()> {
         self.graph
             .try_insert(root.to_string(), GraphItem::User(BTreeMap::default()))
