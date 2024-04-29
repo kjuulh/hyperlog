@@ -5,7 +5,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize, PartialEq, Eq, Clone)]
+#[derive(Deserialize, Serialize, PartialEq, Eq, Clone, Debug)]
 pub enum ItemState {
     #[serde(rename = "not-done")]
     NotDone,

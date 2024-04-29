@@ -10,7 +10,9 @@ use clap::{Parser, Subcommand};
 use sqlx::{Pool, Postgres};
 use tower_http::trace::TraceLayer;
 
+pub mod commander;
 pub mod engine;
+pub mod events;
 pub mod log;
 
 #[derive(Parser)]
