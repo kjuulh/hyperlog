@@ -1,11 +1,9 @@
 [package]
-name = "hyperlog"
+name = "hyperlog-core"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-hyperlog-core.workspace = true
-
 anyhow.workspace = true
 tokio.workspace = true
 tracing.workspace = true

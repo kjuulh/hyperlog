@@ -803,6 +803,29 @@ dependencies = [
  "clap",
  "dirs",
  "dotenv",
+ "hyperlog-core",
+ "serde",
+ "serde_json",
+ "similar-asserts",
+ "sqlx",
+ "tempfile",
+ "tokio",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
+name = "hyperlog-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "bus",
+ "clap",
+ "dirs",
+ "dotenv",
  "serde",
  "serde_json",
  "similar-asserts",

@@ -1,4 +1,3 @@
-#![feature(map_try_insert)]
 use std::{net::SocketAddr, ops::Deref, sync::Arc};
 
 use anyhow::Context;
@@ -7,18 +6,9 @@ use axum::http::Request;
 use axum::routing::get;
 use axum::Router;
 use clap::{Parser, Subcommand};
+use hyperlog_core::{commander, state};
 use sqlx::{Pool, Postgres};
 use tower_http::trace::TraceLayer;
-
-pub mod commander;
-pub mod querier;
-
-pub mod engine;
-pub mod events;
-pub mod log;
-pub mod shared_engine;
-pub mod state;
-pub mod storage;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None, subcommand_required = true)]
@@ -33,17 +23,14 @@ enum Commands {
         #[arg(env = "SERVICE_HOST", long, default_value = "127.0.0.1:3000")]
         host: SocketAddr,
     },
-
     Exec {
         #[command(subcommand)]
         commands: ExecCommands,
     },
-
     Query {
         #[command(subcommand)]
         commands: QueryCommands,
     },
-
     Info {},
 }
 

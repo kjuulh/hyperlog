@@ -3,6 +3,7 @@ members = ["crates/*"]
 resolver = "2"
 
 [workspace.dependencies]
+hyperlog-core = {path = "crates/hyperlog-core"}
 
 anyhow = { version = "1" }
 tokio = { version = "1", features = ["full"] }
