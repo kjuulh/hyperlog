@@ -96,7 +96,7 @@ impl DerefMut for Graph {
 
 #[cfg(test)]
 mod test {
-    use std::collections::{hash_map, BTreeMap, HashMap};
+    use std::collections::BTreeMap;
 
     use crate::log::{GraphItem, ItemState};
 

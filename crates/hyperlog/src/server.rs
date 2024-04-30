@@ -3,7 +3,7 @@ use std::{net::SocketAddr, sync::Arc};
 use axum::{extract::MatchedPath, http::Request, routing::get, Router};
 use tower_http::trace::TraceLayer;
 
-use crate::state::{self, SharedState, State};
+use crate::state::{SharedState, State};
 
 async fn root() -> &'static str {
     "Hello, hyperlog!"

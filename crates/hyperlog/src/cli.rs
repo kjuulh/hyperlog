@@ -1,17 +1,9 @@
-use std::{net::SocketAddr, ops::Deref, sync::Arc};
+use std::net::SocketAddr;
 
-use axum::extract::MatchedPath;
-use axum::http::Request;
-use axum::routing::get;
-use axum::Router;
 use clap::{Parser, Subcommand};
 use hyperlog_core::{commander, state};
-use tower_http::trace::TraceLayer;
 
-use crate::{
-    server::serve,
-    state::{SharedState, State},
-};
+use crate::server::serve;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None, subcommand_required = true)]
