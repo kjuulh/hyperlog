@@ -34,6 +34,21 @@ enum Commands {
         host: SocketAddr,
     },
 
+    Exec {
+        #[command(subcommand)]
+        commands: ExecCommands,
+    },
+
+    Query {
+        #[command(subcommand)]
+        commands: QueryCommands,
+    },
+
+    Info {},
+}
+
+#[derive(Subcommand)]
+enum ExecCommands {
     CreateRoot {
         #[arg(long = "root")]
         root: String,
@@ -46,7 +61,10 @@ enum Commands {
         #[arg(long = "path")]
         path: Option<String>,
     },
+}
 
+#[derive(Subcommand)]
+enum QueryCommands {
     Get {
         #[arg(long = "root")]
         root: String,
@@ -54,8 +72,6 @@ enum Commands {
         #[arg(long = "path")]
         path: Option<String>,
     },
-
-    Info {},
 }
 
 #[tokio::main]
@@ -100,32 +116,36 @@ async fn main() -> anyhow::Result<()> {
                 .await
                 .unwrap();
         }
-        Some(Commands::CreateRoot { root }) => state
-            .commander
-            .execute(commander::Command::CreateRoot { root })?,
-        Some(Commands::CreateSection { root, path }) => {
-            state.commander.execute(commander::Command::CreateSection {
-                root,
-                path: path
-                    .unwrap_or_default()
-                    .split('.')
-                    .map(|s| s.to_string())
-                    .filter(|s| !s.is_empty())
-                    .collect::<Vec<String>>(),
-            })?
-        }
-        Some(Commands::Get { root, path }) => {
-            let res = state.querier.get(
-                &root,
-                path.unwrap_or_default()
-                    .split('.')
-                    .filter(|s| !s.is_empty()),
-            );
+        Some(Commands::Exec { commands }) => match commands {
+            ExecCommands::CreateRoot { root } => state
+                .commander
+                .execute(commander::Command::CreateRoot { root })?,
+            ExecCommands::CreateSection { root, path } => {
+                state.commander.execute(commander::Command::CreateSection {
+                    root,
+                    path: path
+                        .unwrap_or_default()
+                        .split('.')
+                        .map(|s| s.to_string())
+                        .filter(|s| !s.is_empty())
+                        .collect::<Vec<String>>(),
+                })?
+            }
+        },
+        Some(Commands::Query { commands }) => match commands {
+            QueryCommands::Get { root, path } => {
+                let res = state.querier.get(
+                    &root,
+                    path.unwrap_or_default()
+                        .split('.')
+                        .filter(|s| !s.is_empty()),
+                );
 
-            let output = serde_json::to_string_pretty(&res)?;
+                let output = serde_json::to_string_pretty(&res)?;
 
-            println!("{}", output);
-        }
+                println!("{}", output);
+            }
+        },
         Some(Commands::Info {}) => {
             println!("graph stored at: {}", state.storage.info()?)
         }
