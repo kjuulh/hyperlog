@@ -6,7 +6,7 @@ use hyperlog_core::{commander, state};
 use crate::server::serve;
 
 #[derive(Parser)]
-#[command(author, version, about, long_about = None, subcommand_required = true)]
+#[command(author, version, about, long_about = None)]
 struct Command {
     #[command(subcommand)]
     command: Option<Commands>,
@@ -27,6 +27,8 @@ enum Commands {
         commands: QueryCommands,
     },
     Info {},
+
+    ClearLock {},
 }
 
 #[derive(Subcommand)]
@@ -58,6 +60,10 @@ enum QueryCommands {
 
 pub async fn execute() -> anyhow::Result<()> {
     let cli = Command::parse();
+
+    if cli.command.is_some() {
+        tracing_subscriber::fmt::init();
+    }
 
     let state = state::State::new()?;
 
@@ -100,8 +106,13 @@ pub async fn execute() -> anyhow::Result<()> {
         Some(Commands::Info {}) => {
             println!("graph stored at: {}", state.storage.info()?)
         }
-
-        None => {}
+        Some(Commands::ClearLock {}) => {
+            state.storage.clear_lock_file();
+            println!("cleared lock file");
+        }
+        None => {
+            hyperlog_tui::execute(&state).await?;
+        }
     }
 
     Ok(())

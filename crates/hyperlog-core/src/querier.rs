@@ -14,9 +14,18 @@ impl Querier {
         root: &str,
         path: impl IntoIterator<Item = impl Into<String>>,
     ) -> Option<GraphItem> {
-        let path = path.into_iter().map(|i| i.into()).collect::<Vec<String>>();
+        let path = path
+            .into_iter()
+            .map(|i| i.into())
+            .filter(|i| !i.is_empty())
+            .collect::<Vec<String>>();
 
-        tracing::debug!("quering: {}, len: ({}))", path.join("."), path.len());
+        tracing::debug!(
+            "quering: root:({}), path:({}), len: ({}))",
+            root,
+            path.join("."),
+            path.len()
+        );
 
         self.engine
             .get(root, &path.iter().map(|i| i.as_str()).collect::<Vec<_>>())

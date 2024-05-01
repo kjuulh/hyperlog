@@ -1,0 +1,16 @@
+[package]
+name = "hyperlog-tui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+hyperlog-core.workspace = true
+
+anyhow.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+ratatui = "0.26.2"
+crossterm = { version = "0.27.0", features = ["event-stream"] }
+directories = "5.0.1"

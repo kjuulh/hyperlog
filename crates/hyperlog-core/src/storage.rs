@@ -10,6 +10,7 @@ pub struct LockFile(PathBuf);
 
 impl Drop for LockFile {
     fn drop(&mut self) {
+        tracing::debug!("removing lockfile");
         std::fs::remove_file(&self.0).expect("to be able to delete lockfile")
     }
 }
@@ -74,6 +75,14 @@ impl Storage {
     pub fn unload(self) -> anyhow::Result<()> {
         drop(self);
         Ok(())
+    }
+
+    pub fn clear_lock_file(self) {
+        let mut lock_file = self.lock_file.lock().unwrap();
+
+        if lock_file.is_some() {
+            *lock_file = None;
+        }
     }
 
     fn state(&self) -> anyhow::Result<PathBuf> {
