@@ -111,7 +111,7 @@ pub async fn execute() -> anyhow::Result<()> {
             println!("cleared lock file");
         }
         None => {
-            hyperlog_tui::execute(&state).await?;
+            hyperlog_tui::execute(state).await?;
         }
     }
 

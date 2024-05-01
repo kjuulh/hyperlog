@@ -10,8 +10,10 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use hyperlog_core::state::State;
+use hyperlog_core::{log::GraphItem, state::State};
 use ratatui::{backend::CrosstermBackend, prelude::*, widgets::*, Frame, Terminal};
+
+use crate::state::SharedState;
 
 struct TerminalInstance {
     terminal: Terminal<CrosstermBackend<Stdout>>,
@@ -47,11 +49,40 @@ impl Drop for TerminalInstance {
     }
 }
 
-pub async fn execute(state: &State) -> Result<()> {
+mod state {
+    use std::{ops::Deref, sync::Arc};
+
+    use hyperlog_core::state::State;
+
+    #[derive(Clone)]
+    pub struct SharedState {
+        state: Arc<State>,
+    }
+
+    impl Deref for SharedState {
+        type Target = State;
+
+        fn deref(&self) -> &Self::Target {
+            &self.state
+        }
+    }
+
+    impl From<State> for SharedState {
+        fn from(value: State) -> Self {
+            Self {
+                state: Arc::new(value),
+            }
+        }
+    }
+}
+
+pub async fn execute(state: State) -> Result<()> {
     tracing::debug!("starting hyperlog tui");
 
     logging::initialize_panic_handler()?;
     logging::initialize_logging()?;
+
+    let state = SharedState::from(state);
 
     let mut terminal = TerminalInstance::new()?;
     run(&mut terminal, state).context("app loop failed")?;
@@ -59,9 +90,43 @@ pub async fn execute(state: &State) -> Result<()> {
     Ok(())
 }
 
-fn run(terminal: &mut Terminal<CrosstermBackend<Stdout>>, state: &State) -> Result<()> {
+pub struct App<'a> {
+    state: SharedState,
+
+    graph_explorer: GraphExplorer<'a>,
+}
+
+impl<'a> App<'a> {
+    pub fn new(state: SharedState, graph_explorer: GraphExplorer<'a>) -> Self {
+        Self {
+            state,
+            graph_explorer,
+        }
+    }
+}
+
+impl<'a> Widget for &mut App<'a> {
+    fn render(self, area: Rect, buf: &mut Buffer)
+    where
+        Self: Sized,
+    {
+        StatefulWidget::render(
+            GraphExplorer::new(self.state.clone()),
+            area,
+            buf,
+            &mut self.graph_explorer.inner,
+        )
+    }
+}
+
+fn run(terminal: &mut Terminal<CrosstermBackend<Stdout>>, state: SharedState) -> Result<()> {
+    let mut graph_explorer = GraphExplorer::new(state.clone());
+    graph_explorer.update_graph()?;
+
+    let mut app = App::new(state.clone(), graph_explorer);
+
     loop {
-        terminal.draw(|f| crate::render_app(f, &state))?;
+        terminal.draw(|f| crate::render_app(f, &mut app))?;
         if should_quit()? {
             break;
         }
@@ -69,7 +134,7 @@ fn run(terminal: &mut Terminal<CrosstermBackend<Stdout>>, state: &State) -> Resu
     Ok(())
 }
 
-fn render_app(frame: &mut Frame, state: &State) {
+fn render_app(frame: &mut Frame, state: &mut App) {
     let chunks =
         Layout::vertical(vec![Constraint::Length(2), Constraint::Min(0)]).split(frame.size());
 
@@ -104,10 +169,74 @@ fn render_app(frame: &mut Frame, state: &State) {
             top: 2,
             bottom: 2,
         });
+    //frame.render_widget(background.block(bg_block), chunks[1]);
 
-    if let Some(graph) = state.querier.get("something", Vec::<String>::new()) {}
+    frame.render_widget(state, chunks[1])
+}
 
-    frame.render_widget(background.block(bg_block), chunks[1]);
+struct GraphExplorer<'a> {
+    state: SharedState,
+
+    inner: GraphExplorerState<'a>,
+}
+
+struct GraphExplorerState<'a> {
+    current_path: Option<&'a str>,
+
+    graph: Option<GraphItem>,
+}
+
+impl GraphExplorer<'_> {
+    pub fn new(state: SharedState) -> Self {
+        Self {
+            state,
+            inner: GraphExplorerState::<'_> {
+                current_path: None,
+                graph: None,
+            },
+        }
+    }
+
+    pub fn update_graph(&mut self) -> Result<&mut Self> {
+        let graph = self
+            .state
+            .querier
+            .get(
+                "something",
+                self.inner
+                    .current_path
+                    .map(|p| p.split('.').collect::<Vec<_>>())
+                    .unwrap_or_default(),
+            )
+            .ok_or(anyhow::anyhow!("graph should've had an item"))?;
+
+        self.inner.graph = Some(graph);
+
+        Ok(self)
+    }
+}
+
+impl<'a> StatefulWidget for GraphExplorer<'a> {
+    type State = GraphExplorerState<'a>;
+
+    fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+        let Rect { height, .. } = area;
+        let height = height as usize;
+
+        if let Some(graph) = &state.graph {
+            if let Ok(graph) = serde_json::to_string_pretty(graph) {
+                let lines = graph
+                    .split('\n')
+                    .take(height)
+                    .map(Line::raw)
+                    .collect::<Vec<_>>();
+
+                let para = Paragraph::new(lines);
+
+                para.render(area, buf);
+            }
+        }
+    }
 }
 
 fn should_quit() -> Result<bool> {

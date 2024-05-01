@@ -14,6 +14,7 @@ tracing-subscriber.workspace = true
 clap.workspace = true
 dotenv.workspace = true
 axum.workspace = true
+serde_json.workspace = true
 
 serde = { version = "1.0.197", features = ["derive"] }
 sqlx = { version = "0.7.3", features = [
@@ -25,7 +26,6 @@ sqlx = { version = "0.7.3", features = [
 ] }
 uuid = { version = "1.7.0", features = ["v4"] }
 tower-http = { version = "0.5.2", features = ["cors", "trace"] }
-serde_json = "1.0.116"
 bus = "2.4.1"
 dirs = "5.0.1"
 
