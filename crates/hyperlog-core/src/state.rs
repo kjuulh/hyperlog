@@ -3,6 +3,7 @@ use crate::{
     storage::Storage,
 };
 
+#[allow(dead_code)]
 pub struct State {
     engine: SharedEngine,
     pub storage: Storage,
