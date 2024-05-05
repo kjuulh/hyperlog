@@ -13,7 +13,7 @@ pub enum ItemState {
     Done,
 }
 
-#[derive(Deserialize, Serialize, PartialEq, Eq, Clone)]
+#[derive(Deserialize, Serialize, PartialEq, Eq, Clone, Debug)]
 #[serde(tag = "type")]
 pub enum GraphItem {
     #[serde(rename = "user")]
