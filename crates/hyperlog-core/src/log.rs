@@ -32,8 +32,9 @@ impl GraphItem {
     pub fn get(&self, path: &[&str]) -> Option<&GraphItem> {
         match path.split_first() {
             Some((first, rest)) => match self {
-                GraphItem::User(u) => u.get(*first)?.get(rest),
-                GraphItem::Section(s) => s.get(*first)?.get(rest),
+                GraphItem::User(section) | GraphItem::Section(section) => {
+                    section.get(*first)?.get(rest)
+                }
                 GraphItem::Item { .. } => None,
             },
             None => Some(self),
@@ -43,8 +44,9 @@ impl GraphItem {
     pub fn get_mut(&mut self, path: &[&str]) -> Option<&mut GraphItem> {
         match path.split_first() {
             Some((first, rest)) => match self {
-                GraphItem::User(u) => u.get_mut(*first)?.get_mut(rest),
-                GraphItem::Section(s) => s.get_mut(*first)?.get_mut(rest),
+                GraphItem::User(section) | GraphItem::Section(section) => {
+                    section.get_mut(*first)?.get_mut(rest)
+                }
                 GraphItem::Item { .. } => None,
             },
             None => Some(self),
@@ -54,20 +56,12 @@ impl GraphItem {
     pub fn take(&mut self, path: &[&str]) -> Option<GraphItem> {
         match path.split_first() {
             Some((first, rest)) => match self {
-                GraphItem::User(u) => {
+                GraphItem::User(section) | GraphItem::Section(section) => {
                     if rest.is_empty() {
-                        let val = u.remove(*first);
+                        let val = section.remove(*first);
                         val.map(|v| *v)
                     } else {
-                        u.get_mut(*first)?.take(rest)
-                    }
-                }
-                GraphItem::Section(s) => {
-                    if rest.is_empty() {
-                        let val = s.remove(*first);
-                        val.map(|v| *v)
-                    } else {
-                        s.get_mut(*first)?.take(rest)
+                        section.get_mut(*first)?.take(rest)
                     }
                 }
                 GraphItem::Item { .. } => None,
