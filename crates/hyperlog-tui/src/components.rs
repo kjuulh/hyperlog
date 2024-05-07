@@ -237,7 +237,7 @@ impl<'a> StatefulWidget for GraphExplorer<'a> {
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         let Rect { height, .. } = area;
-        let height = height as usize;
+        let _height = height as usize;
 
         if let Some(graph) = &state.graph {
             let movement_graph: MovementGraph = graph.clone().into();

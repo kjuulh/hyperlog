@@ -3,10 +3,26 @@ use ratatui::{
     widgets::{Block, Borders, Padding, Paragraph},
 };
 
-use crate::{components::GraphExplorer, state::SharedState, Msg};
+use crate::{components::GraphExplorer, models::EditMsg, state::SharedState, Msg};
+
+use self::dialog::{CreateItem, CreateItemState};
+
+pub mod dialog;
+
+pub enum Dialog {
+    CreateItem { state: CreateItemState },
+}
+
+pub enum Mode {
+    View,
+    Insert,
+}
 
 pub struct App<'a> {
     state: SharedState,
+
+    pub mode: Mode,
+    dialog: Option<Dialog>,
 
     graph_explorer: GraphExplorer<'a>,
 }
@@ -14,6 +30,8 @@ pub struct App<'a> {
 impl<'a> App<'a> {
     pub fn new(state: SharedState, graph_explorer: GraphExplorer<'a>) -> Self {
         Self {
+            mode: Mode::View,
+            dialog: None,
             state,
             graph_explorer,
         }
@@ -23,10 +41,30 @@ impl<'a> App<'a> {
         tracing::trace!("handling msg: {:?}", msg);
 
         match msg {
-            Msg::MoveRight => self.graph_explorer.move_right(),
-            Msg::MoveLeft => self.graph_explorer.move_left(),
-            Msg::MoveDown => self.graph_explorer.move_down(),
-            Msg::MoveUp => self.graph_explorer.move_up(),
+            Msg::MoveRight => self.graph_explorer.move_right()?,
+            Msg::MoveLeft => self.graph_explorer.move_left()?,
+            Msg::MoveDown => self.graph_explorer.move_down()?,
+            Msg::MoveUp => self.graph_explorer.move_up()?,
+            Msg::OpenCreateItemDialog => self.open_dialog(),
+            Msg::EnterInsertMode => self.mode = Mode::Insert,
+            Msg::EnterCommandMode => self.mode = Mode::View,
+            _ => {}
+        }
+
+        if let Some(dialog) = &mut self.dialog {
+            match dialog {
+                Dialog::CreateItem { state } => state.update(&msg)?,
+            }
+        }
+
+        Ok(())
+    }
+
+    fn open_dialog(&mut self) {
+        if self.dialog.is_none() {
+            self.dialog = Some(Dialog::CreateItem {
+                state: CreateItemState::default(),
+            });
         }
     }
 }
@@ -46,15 +84,39 @@ impl<'a> Widget for &mut App<'a> {
 }
 
 pub fn render_app(frame: &mut Frame, state: &mut App) {
-    let chunks =
-        Layout::vertical(vec![Constraint::Length(2), Constraint::Min(0)]).split(frame.size());
+    let chunks = Layout::vertical(vec![
+        Constraint::Length(2),
+        Constraint::Min(0),
+        Constraint::Length(1),
+    ])
+    .split(frame.size());
 
-    let heading = Paragraph::new(text::Line::from(
-        Span::styled("hyperlog", Style::default()).fg(Color::Green),
-    ));
+    let mut heading_parts = vec![Span::styled("hyperlog", Style::default()).fg(Color::Green)];
+
+    if let Some(dialog) = &state.dialog {
+        heading_parts.push(Span::raw(" ~ "));
+
+        match dialog {
+            Dialog::CreateItem { .. } => heading_parts.push(Span::raw("create item")),
+        }
+    }
+
+    let heading = Paragraph::new(text::Line::from(heading_parts));
     let block_heading = Block::default().borders(Borders::BOTTOM);
 
     frame.render_widget(heading.block(block_heading), chunks[0]);
+
+    let powerbar = match &state.mode {
+        Mode::View => Line::raw("-- VIEW --"),
+        Mode::Insert => Line::raw("-- EDIT --"),
+    };
+    let powerbar_block = Block::default()
+        .borders(Borders::empty())
+        .padding(Padding::new(1, 1, 0, 0));
+    frame.render_widget(
+        Paragraph::new(vec![powerbar]).block(powerbar_block),
+        chunks[2],
+    );
 
     let Rect { width, height, .. } = chunks[1];
 
@@ -80,7 +142,16 @@ pub fn render_app(frame: &mut Frame, state: &mut App) {
             top: 2,
             bottom: 2,
         });
-    //frame.render_widget(background.block(bg_block), chunks[1]);
 
-    frame.render_widget(state, chunks[1])
+    if let Some(dialog) = state.dialog.as_mut() {
+        match dialog {
+            Dialog::CreateItem { state } => {
+                frame.render_stateful_widget(&mut CreateItem::default(), chunks[1], state)
+            }
+        }
+
+        return;
+    }
+
+    frame.render_widget(state, chunks[1]);
 }

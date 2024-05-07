@@ -5,7 +5,7 @@ use app::{render_app, App};
 use components::GraphExplorer;
 use crossterm::event::{self, Event, KeyCode};
 use hyperlog_core::state::State;
-use models::Msg;
+use models::{EditMsg, Msg};
 use ratatui::{backend::CrosstermBackend, Terminal};
 
 use crate::{state::SharedState, terminal::TerminalInstance};
@@ -67,21 +67,42 @@ fn update(
 ) -> Result<UpdateConclusion> {
     if event::poll(Duration::from_millis(250)).context("event poll failed")? {
         if let Event::Key(key) = event::read().context("event read failed")? {
-            match key.code {
-                KeyCode::Char('q') => return Ok(UpdateConclusion::new(true)),
-                KeyCode::Char('l') => {
-                    app.update(Msg::MoveRight)?;
-                }
-                KeyCode::Char('h') => {
-                    app.update(Msg::MoveLeft)?;
-                }
-                KeyCode::Char('j') => {
-                    app.update(Msg::MoveDown)?;
-                }
-                KeyCode::Char('k') => {
-                    app.update(Msg::MoveUp)?;
-                }
-                _ => {}
+            match &app.mode {
+                app::Mode::View => match key.code {
+                    KeyCode::Char('q') => return Ok(UpdateConclusion::new(true)),
+                    KeyCode::Char('l') => {
+                        app.update(Msg::MoveRight)?;
+                    }
+                    KeyCode::Char('h') => {
+                        app.update(Msg::MoveLeft)?;
+                    }
+                    KeyCode::Char('j') => {
+                        app.update(Msg::MoveDown)?;
+                    }
+                    KeyCode::Char('k') => {
+                        app.update(Msg::MoveUp)?;
+                    }
+                    KeyCode::Char('a') => {
+                        app.update(Msg::OpenCreateItemDialog)?;
+                        app.update(Msg::EnterInsertMode)?;
+                    }
+                    KeyCode::Char('i') => {
+                        app.update(Msg::EnterInsertMode)?;
+                    }
+                    _ => {}
+                },
+
+                app::Mode::Insert => match key.code {
+                    KeyCode::Backspace => app.update(Msg::Edit(EditMsg::Delete))?,
+                    KeyCode::Enter => app.update(Msg::Edit(EditMsg::InsertNewLine))?,
+                    KeyCode::Tab => app.update(Msg::Edit(EditMsg::InsertTab))?,
+                    KeyCode::Delete => app.update(Msg::Edit(EditMsg::DeleteNext))?,
+                    KeyCode::Char(c) => app.update(Msg::Edit(EditMsg::InsertChar(c)))?,
+                    KeyCode::Left => app.update(Msg::Edit(EditMsg::MoveLeft))?,
+                    KeyCode::Right => app.update(Msg::Edit(EditMsg::MoveRight))?,
+                    KeyCode::Esc => app.update(Msg::EnterCommandMode)?,
+                    _ => {}
+                },
             }
         }
     }
