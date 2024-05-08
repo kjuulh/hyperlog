@@ -1,3 +1,5 @@
+use crate::commands::{Command, IntoCommand};
+
 #[derive(Debug)]
 pub enum Msg {
     MoveRight,
@@ -7,8 +9,18 @@ pub enum Msg {
     OpenCreateItemDialog,
 
     EnterInsertMode,
+    EnterViewMode,
     EnterCommandMode,
+
+    SubmitCommand,
+
     Edit(EditMsg),
+}
+
+impl IntoCommand for Msg {
+    fn into_command(self) -> crate::commands::Command {
+        Command::new(|| Some(self))
+    }
 }
 
 #[derive(Debug)]

@@ -3,10 +3,14 @@ use ratatui::{
     widgets::{Block, Borders, Padding, Paragraph},
 };
 
-use crate::{components::GraphExplorer, models::EditMsg, state::SharedState, Msg};
+use crate::{commands::IntoCommand, components::GraphExplorer, state::SharedState, Msg};
 
-use self::dialog::{CreateItem, CreateItemState};
+use self::{
+    command_bar::{CommandBar, CommandBarState},
+    dialog::{CreateItem, CreateItemState},
+};
 
+mod command_bar;
 pub mod dialog;
 
 pub enum Dialog {
@@ -16,6 +20,7 @@ pub enum Dialog {
 pub enum Mode {
     View,
     Insert,
+    Command,
 }
 
 pub struct App<'a> {
@@ -23,6 +28,7 @@ pub struct App<'a> {
 
     pub mode: Mode,
     dialog: Option<Dialog>,
+    command: Option<CommandBarState>,
 
     graph_explorer: GraphExplorer<'a>,
 }
@@ -32,12 +38,13 @@ impl<'a> App<'a> {
         Self {
             mode: Mode::View,
             dialog: None,
+            command: None,
             state,
             graph_explorer,
         }
     }
 
-    pub fn update(&mut self, msg: Msg) -> anyhow::Result<()> {
+    pub fn update(&mut self, msg: Msg) -> anyhow::Result<impl IntoCommand> {
         tracing::trace!("handling msg: {:?}", msg);
 
         match msg {
@@ -47,17 +54,31 @@ impl<'a> App<'a> {
             Msg::MoveUp => self.graph_explorer.move_up()?,
             Msg::OpenCreateItemDialog => self.open_dialog(),
             Msg::EnterInsertMode => self.mode = Mode::Insert,
-            Msg::EnterCommandMode => self.mode = Mode::View,
+            Msg::EnterViewMode => self.mode = Mode::View,
+            Msg::EnterCommandMode => {
+                self.command = Some(CommandBarState::default());
+                self.mode = Mode::Command
+            }
+            Msg::SubmitCommand => {
+                tracing::info!("submitting command");
+
+                self.command = None;
+
+                return Ok(Msg::EnterViewMode.into_command());
+            }
             _ => {}
         }
 
-        if let Some(dialog) = &mut self.dialog {
+        if let Some(command) = &mut self.command {
+            let cmd = command.update(&msg)?;
+            return Ok(cmd.into_command());
+        } else if let Some(dialog) = &mut self.dialog {
             match dialog {
                 Dialog::CreateItem { state } => state.update(&msg)?,
             }
         }
 
-        Ok(())
+        Ok(().into_command())
     }
 
     fn open_dialog(&mut self) {
@@ -106,17 +127,29 @@ pub fn render_app(frame: &mut Frame, state: &mut App) {
 
     frame.render_widget(heading.block(block_heading), chunks[0]);
 
-    let powerbar = match &state.mode {
-        Mode::View => Line::raw("-- VIEW --"),
-        Mode::Insert => Line::raw("-- EDIT --"),
-    };
-    let powerbar_block = Block::default()
-        .borders(Borders::empty())
-        .padding(Padding::new(1, 1, 0, 0));
-    frame.render_widget(
-        Paragraph::new(vec![powerbar]).block(powerbar_block),
-        chunks[2],
-    );
+    match &state.mode {
+        Mode::View => {
+            let line = Line::raw("-- VIEW --");
+
+            let powerbar_block = Block::default()
+                .borders(Borders::empty())
+                .padding(Padding::new(1, 1, 0, 0));
+            frame.render_widget(Paragraph::new(vec![line]).block(powerbar_block), chunks[2]);
+        }
+        Mode::Insert => {
+            let line = Line::raw("-- EDIT --");
+
+            let powerbar_block = Block::default()
+                .borders(Borders::empty())
+                .padding(Padding::new(1, 1, 0, 0));
+            frame.render_widget(Paragraph::new(vec![line]).block(powerbar_block), chunks[2]);
+        }
+        Mode::Command => {
+            if let Some(command) = &mut state.command {
+                frame.render_stateful_widget(CommandBar::default(), chunks[2], command);
+            }
+        }
+    }
 
     let Rect { width, height, .. } = chunks[1];
 

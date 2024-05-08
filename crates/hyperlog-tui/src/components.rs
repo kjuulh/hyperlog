@@ -151,8 +151,10 @@ impl RenderGraph for MovementGraph {
             }) {
                 Some((true, rest)) => {
                     if rest.is_empty() {
-                        lines
-                            .push(Line::raw(format!("- {}", item.name)).style(Style::new().bold()));
+                        lines.push(
+                            Line::raw(format!("- {}", item.name))
+                                .style(Style::new().bold().white()),
+                        );
                     } else {
                         lines.push(
                             Line::raw(format!("- {}", item.name))
@@ -203,7 +205,10 @@ impl RenderGraph for MovementGraph {
                 Some((true, rest)) => {
                     let mut line = Vec::new();
                     if rest.is_empty() {
-                        line.push(Span::raw(format!("- {}", item.name)).style(Style::new().bold()));
+                        line.push(
+                            Span::raw(format!("- {}", item.name))
+                                .style(Style::new().bold().white()),
+                        );
                     } else {
                         line.push(
                             Span::raw(format!("- {}", item.name))

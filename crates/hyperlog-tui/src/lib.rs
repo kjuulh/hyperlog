@@ -1,7 +1,10 @@
+#![feature(fn_traits)]
+
 use std::{io::Stdout, time::Duration};
 
 use anyhow::{Context, Result};
 use app::{render_app, App};
+use commands::IntoCommand;
 use components::GraphExplorer;
 use crossterm::event::{self, Event, KeyCode};
 use hyperlog_core::state::State;
@@ -13,6 +16,7 @@ use crate::{state::SharedState, terminal::TerminalInstance};
 pub mod models;
 
 pub(crate) mod app;
+pub(crate) mod commands;
 pub(crate) mod components;
 pub(crate) mod state;
 
@@ -67,32 +71,24 @@ fn update(
 ) -> Result<UpdateConclusion> {
     if event::poll(Duration::from_millis(250)).context("event poll failed")? {
         if let Event::Key(key) = event::read().context("event read failed")? {
-            match &app.mode {
+            let mut cmd = match &app.mode {
                 app::Mode::View => match key.code {
                     KeyCode::Char('q') => return Ok(UpdateConclusion::new(true)),
-                    KeyCode::Char('l') => {
-                        app.update(Msg::MoveRight)?;
-                    }
-                    KeyCode::Char('h') => {
-                        app.update(Msg::MoveLeft)?;
-                    }
-                    KeyCode::Char('j') => {
-                        app.update(Msg::MoveDown)?;
-                    }
-                    KeyCode::Char('k') => {
-                        app.update(Msg::MoveUp)?;
-                    }
+                    KeyCode::Char('l') => app.update(Msg::MoveRight)?,
+                    KeyCode::Char('h') => app.update(Msg::MoveLeft)?,
+                    KeyCode::Char('j') => app.update(Msg::MoveDown)?,
+                    KeyCode::Char('k') => app.update(Msg::MoveUp)?,
                     KeyCode::Char('a') => {
+                        // TODO: batch commands
                         app.update(Msg::OpenCreateItemDialog)?;
-                        app.update(Msg::EnterInsertMode)?;
+                        app.update(Msg::EnterInsertMode)?
                     }
-                    KeyCode::Char('i') => {
-                        app.update(Msg::EnterInsertMode)?;
-                    }
-                    _ => {}
+                    KeyCode::Char('i') => app.update(Msg::EnterInsertMode)?,
+                    KeyCode::Char(':') => app.update(Msg::EnterCommandMode)?,
+                    _ => return Ok(UpdateConclusion(false)),
                 },
 
-                app::Mode::Insert => match key.code {
+                app::Mode::Command | app::Mode::Insert => match key.code {
                     KeyCode::Backspace => app.update(Msg::Edit(EditMsg::Delete))?,
                     KeyCode::Enter => app.update(Msg::Edit(EditMsg::InsertNewLine))?,
                     KeyCode::Tab => app.update(Msg::Edit(EditMsg::InsertTab))?,
@@ -100,9 +96,19 @@ fn update(
                     KeyCode::Char(c) => app.update(Msg::Edit(EditMsg::InsertChar(c)))?,
                     KeyCode::Left => app.update(Msg::Edit(EditMsg::MoveLeft))?,
                     KeyCode::Right => app.update(Msg::Edit(EditMsg::MoveRight))?,
-                    KeyCode::Esc => app.update(Msg::EnterCommandMode)?,
-                    _ => {}
+                    KeyCode::Esc => app.update(Msg::EnterViewMode)?,
+                    _ => return Ok(UpdateConclusion(false)),
                 },
+            };
+
+            loop {
+                let msg = cmd.into_command().execute();
+                match msg {
+                    Some(msg) => {
+                        cmd = app.update(msg)?;
+                    }
+                    None => break,
+                }
             }
         }
     }

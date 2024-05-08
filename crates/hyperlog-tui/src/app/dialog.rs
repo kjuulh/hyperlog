@@ -1,5 +1,3 @@
-use std::{ops::Deref, rc::Rc};
-
 use ratatui::{prelude::*, widgets::*};
 
 use crate::models::{EditMsg, Msg};
@@ -25,13 +23,13 @@ impl Default for BufferState {
 }
 
 impl BufferState {
-    fn update(&mut self, msg: &EditMsg) -> anyhow::Result<()> {
+    pub fn update(&mut self, msg: &EditMsg) -> anyhow::Result<()> {
         if let BufferState::Focused { content, position } = self {
             let pos = *position;
 
             match msg {
                 EditMsg::Delete => {
-                    if pos > 0 && content.len_chars() > pos {
+                    if pos > 0 && pos <= content.len_chars() {
                         content.remove((pos - 1)..pos);
                         *position = position.saturating_sub(1);
                     }
@@ -41,8 +39,8 @@ impl BufferState {
                         content.remove((pos)..pos + 1);
                     }
                 }
-                EditMsg::InsertNewLine => todo!(),
-                EditMsg::InsertTab => todo!(),
+                EditMsg::InsertNewLine => {}
+                EditMsg::InsertTab => {}
                 EditMsg::InsertChar(c) => {
                     content.try_insert_char(pos, *c)?;
                     *position = position.saturating_add(1);
@@ -51,7 +49,7 @@ impl BufferState {
                     *position = position.saturating_sub(1);
                 }
                 EditMsg::MoveRight => {
-                    if pos + 1 < content.len_chars() {
+                    if pos < content.len_chars() {
                         *position = pos.saturating_add(1);
                     }
                 }
@@ -60,10 +58,17 @@ impl BufferState {
 
         Ok(())
     }
+
+    pub fn string(&self) -> String {
+        match self {
+            BufferState::Focused { content, .. } => content.to_string(),
+            BufferState::Static { content, .. } => content.to_owned(),
+        }
+    }
 }
 
 pub struct InputBuffer {
-    state: BufferState,
+    pub state: BufferState,
 }
 
 impl InputBuffer {
@@ -111,7 +116,8 @@ impl InputBuffer {
     pub fn update(&mut self, msg: &Msg) -> anyhow::Result<()> {
         match msg {
             Msg::EnterInsertMode => self.to_focused(),
-            Msg::EnterCommandMode => self.to_static(),
+            Msg::EnterCommandMode => self.to_focused(),
+            Msg::EnterViewMode => self.to_static(),
             Msg::Edit(c) => {
                 self.state.update(c)?;
             }
@@ -120,13 +126,12 @@ impl InputBuffer {
 
         Ok(())
     }
-}
 
-impl Widget for InputBuffer {
-    fn render(self, area: Rect, buf: &mut Buffer)
-    where
-        Self: Sized,
-    {
+    pub fn string(&self) -> String {
+        match &self.state {
+            BufferState::Focused { ref content, .. } => content.to_string(),
+            BufferState::Static { content, .. } => content.to_owned(),
+        }
     }
 }
 
@@ -155,10 +160,13 @@ impl<'a> StatefulWidget for InputField<'a> {
         let block = Block::bordered().title(self.title);
 
         match &state.state {
-            BufferState::Focused { content, .. } => {
+            BufferState::Focused { content, position } => {
                 Paragraph::new(content.to_string().as_str())
                     .block(block)
                     .render(area, buf);
+
+                buf.get_mut(area.x + 1 + *position as u16, area.y + 1)
+                    .set_style(Style::new().bg(Color::Magenta).fg(Color::Black));
             }
             BufferState::Static { content, .. } => {
                 Paragraph::new(content.as_str())
