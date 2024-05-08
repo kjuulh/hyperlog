@@ -154,7 +154,10 @@ impl RenderGraph for MovementGraph {
                         lines
                             .push(Line::raw(format!("- {}", item.name)).style(Style::new().bold()));
                     } else {
-                        lines.push(Line::raw(format!("- {}", item.name)));
+                        lines.push(
+                            Line::raw(format!("- {}", item.name))
+                                .patch_style(Style::new().dark_gray()),
+                        );
                     }
 
                     lines.push("".into());
@@ -167,7 +170,9 @@ impl RenderGraph for MovementGraph {
                     }
                 }
                 _ => {
-                    lines.push(Line::raw(format!("- {}", item.name)));
+                    lines.push(
+                        Line::raw(format!("- {}", item.name)).patch_style(Style::new().dark_gray()),
+                    );
 
                     lines.push("".into());
 
@@ -200,7 +205,10 @@ impl RenderGraph for MovementGraph {
                     if rest.is_empty() {
                         line.push(Span::raw(format!("- {}", item.name)).style(Style::new().bold()));
                     } else {
-                        line.push(Span::raw(format!("- {}", item.name)));
+                        line.push(
+                            Span::raw(format!("- {}", item.name))
+                                .patch_style(Style::new().dark_gray()),
+                        );
                     }
 
                     lines.push(line);
@@ -214,7 +222,9 @@ impl RenderGraph for MovementGraph {
                     }
                 }
                 _ => {
-                    lines.push(vec![Span::raw(format!("- {}", item.name))]);
+                    lines
+                        .push(vec![Span::raw(format!("- {}", item.name))
+                            .patch_style(Style::new().dark_gray())]);
 
                     lines.push(vec!["".into()]);
 
