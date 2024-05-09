@@ -12,7 +12,7 @@ pub enum Msg {
     EnterViewMode,
     EnterCommandMode,
 
-    SubmitCommand,
+    SubmitCommand { command: String },
 
     Edit(EditMsg),
 }

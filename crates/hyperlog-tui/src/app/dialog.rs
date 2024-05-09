@@ -145,11 +145,16 @@ impl Default for InputBuffer {
 
 pub struct InputField<'a> {
     title: &'a str,
+
+    focused: bool,
 }
 
 impl<'a> InputField<'a> {
     pub fn new(title: &'a str) -> Self {
-        Self { title }
+        Self {
+            title,
+            focused: false,
+        }
     }
 }
 
@@ -157,7 +162,11 @@ impl<'a> StatefulWidget for InputField<'a> {
     type State = InputBuffer;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        let block = Block::bordered().title(self.title);
+        let mut block = Block::bordered().title(self.title);
+
+        if !self.focused {
+            block = block.dark_gray();
+        }
 
         match &state.state {
             BufferState::Focused { content, position } => {
@@ -165,7 +174,7 @@ impl<'a> StatefulWidget for InputField<'a> {
                     .block(block)
                     .render(area, buf);
 
-                buf.get_mut(area.x + 1 + *position as u16, area.y + 1)
+                buf.get_mut(clamp_x(&area, area.x + 1 + *position as u16), area.y + 1)
                     .set_style(Style::new().bg(Color::Magenta).fg(Color::Black));
             }
             BufferState::Static { content, .. } => {
@@ -174,6 +183,14 @@ impl<'a> StatefulWidget for InputField<'a> {
                     .render(area, buf);
             }
         }
+    }
+}
+
+fn clamp_x(area: &Rect, x: u16) -> u16 {
+    if x >= area.width {
+        area.width - 1
+    } else {
+        x
     }
 }
 
@@ -239,9 +256,16 @@ impl StatefulWidget for &mut CreateItem {
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         let chunks =
             Layout::vertical(vec![Constraint::Length(3), Constraint::Length(3)]).split(area);
+        let mut title_input = InputField::new("title");
+        let mut description_input = InputField::new("description");
 
-        InputField::new("title").render(chunks[0], buf, &mut state.title);
-        InputField::new("description").render(chunks[1], buf, &mut state.description);
+        match state.focused {
+            CreateItemFocused::Title => title_input.focused = true,
+            CreateItemFocused::Description => description_input.focused = true,
+        }
+
+        title_input.render(chunks[0], buf, &mut state.title);
+        description_input.render(chunks[1], buf, &mut state.description);
 
         // let title = Paragraph::new("something"); //.block(block);
 

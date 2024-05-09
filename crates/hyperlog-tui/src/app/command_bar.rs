@@ -22,22 +22,25 @@ impl Default for CommandBarState {
     }
 }
 
-#[derive(Default)]
-pub struct CommandBar {}
-
 impl CommandBarState {
     pub fn update(&mut self, msg: &Msg) -> anyhow::Result<impl IntoCommand> {
         if let Msg::Edit(e) = msg {
             self.contents.update(e)?;
 
             if let EditMsg::InsertNewLine = e {
-                return Ok(Msg::SubmitCommand.into_command());
+                return Ok(Msg::SubmitCommand {
+                    command: self.contents.string(),
+                }
+                .into_command());
             }
         }
 
         Ok(().into_command())
     }
 }
+
+#[derive(Default)]
+pub struct CommandBar {}
 
 impl StatefulWidget for CommandBar {
     type State = CommandBarState;

@@ -59,7 +59,7 @@ impl<'a> App<'a> {
                 self.command = Some(CommandBarState::default());
                 self.mode = Mode::Command
             }
-            Msg::SubmitCommand => {
+            Msg::SubmitCommand { command } => {
                 tracing::info!("submitting command");
 
                 self.command = None;
