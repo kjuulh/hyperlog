@@ -36,6 +36,8 @@ impl<'a> GraphExplorer<'a> {
     }
 
     pub fn update_graph(&mut self) -> Result<&mut Self> {
+        let now = std::time::SystemTime::now();
+
         let graph = self
             .state
             .querier
@@ -49,6 +51,9 @@ impl<'a> GraphExplorer<'a> {
             .ok_or(anyhow::anyhow!("graph should've had an item"))?;
 
         self.inner.graph = Some(graph);
+
+        let elapsed = now.elapsed()?;
+        tracing::trace!("Graph.update_graph took: {}nanos", elapsed.as_nanos());
 
         Ok(self)
     }
@@ -141,10 +146,26 @@ impl<'a> GraphExplorer<'a> {
     }
 
     pub fn execute_command(&mut self, command: &Commands) -> anyhow::Result<()> {
-        if let Commands::Archive = command {
-            if !self.get_current_path().is_empty() {
-                tracing::debug!("archiving path: {:?}", self.get_current_path())
+        match command {
+            Commands::Archive => {
+                if !self.get_current_path().is_empty() {
+                    tracing::debug!("archiving path: {:?}", self.get_current_path())
+                }
             }
+            Commands::CreateSection { name } => {
+                if !name.is_empty() {
+                    let mut path = self.get_current_path();
+                    path.push(name.replace(" ", "-").replace(".", "-"));
+
+                    self.state.commander.execute(
+                        hyperlog_core::commander::Command::CreateSection {
+                            root: self.inner.root.clone(),
+                            path,
+                        },
+                    )?;
+                }
+            }
+            _ => (),
         }
 
         self.update_graph()?;

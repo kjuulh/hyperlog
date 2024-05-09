@@ -5,6 +5,7 @@ pub enum Commands {
     Quit,
     WriteQuit,
     Archive,
+    CreateSection { name: String },
 }
 
 impl Commands {
@@ -26,11 +27,14 @@ impl CommandParser {
         let parts = prepared.split_whitespace().collect_vec();
 
         match parts.split_first() {
-            Some((command, _)) => match *command {
+            Some((command, rest)) => match *command {
                 "w" | "write" => Some(Commands::Write),
                 "q" | "quit" => Some(Commands::Quit),
                 "wq" | "write-quit" => Some(Commands::WriteQuit),
                 "a" | "archive" => Some(Commands::Archive),
+                "cs" | "create-section" => rest.first().map(|name| Commands::CreateSection {
+                    name: name.to_string(),
+                }),
                 _ => None,
             },
             None => None,

@@ -251,7 +251,7 @@ impl CreateItemState {
 
         if !title.is_empty() {
             let mut path = self.path.clone();
-            path.push(title.replace(' ', "").replace('.', "-"));
+            path.push(title.replace([' ', '.'], "-"));
 
             Some(hyperlog_core::commander::Command::CreateItem {
                 root: self.root.clone(),
@@ -270,18 +270,6 @@ impl CreateItemState {
 pub struct CreateItem {}
 
 impl StatefulWidget for &mut CreateItem {
-    // fn render(self, area: Rect, buf: &mut Buffer)
-    // where
-    //     Self: Sized,
-    // {
-    //     //buf.reset();
-
-    //     // let block = Block::bordered()
-    //     //     .title("create item")
-    //     //     .padding(Padding::proportional(1));
-
-    // }
-
     type State = CreateItemState;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
@@ -306,9 +294,5 @@ impl StatefulWidget for &mut CreateItem {
 
         title_input.render(chunks[1], buf, &mut state.title);
         description_input.render(chunks[2], buf, &mut state.description);
-
-        // let title = Paragraph::new("something"); //.block(block);
-
-        // title.render(area, buf);
     }
 }
