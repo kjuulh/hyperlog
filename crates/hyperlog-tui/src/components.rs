@@ -1,11 +1,11 @@
 use std::ops::Deref;
 
 use anyhow::Result;
-use hyperlog_core::log::GraphItem;
+use hyperlog_core::log::{GraphItem, ItemState};
 use itertools::Itertools;
 use ratatui::{prelude::*, widgets::*};
 
-use crate::{command_parser::Commands, commands::Command, state::SharedState};
+use crate::{command_parser::Commands, state::SharedState};
 
 pub struct GraphExplorer<'a> {
     state: SharedState,
@@ -40,8 +40,7 @@ impl<'a> GraphExplorer<'a> {
             .state
             .querier
             .get(
-                // FIXME: Replace with a setting or default instead, probaby user
-                "kjuulh",
+                &self.inner.root,
                 self.inner
                     .current_path
                     .map(|p| p.split('.').collect::<Vec<_>>())
@@ -141,12 +140,14 @@ impl<'a> GraphExplorer<'a> {
         }
     }
 
-    pub fn execute_command(&self, command: &Commands) -> anyhow::Result<()> {
+    pub fn execute_command(&mut self, command: &Commands) -> anyhow::Result<()> {
         if let Commands::Archive = command {
             if !self.get_current_path().is_empty() {
                 tracing::debug!("archiving path: {:?}", self.get_current_path())
             }
         }
+
+        self.update_graph()?;
 
         Ok(())
     }
@@ -162,6 +163,8 @@ impl<'a> GraphExplorer<'a> {
                     path: self.get_current_path(),
                 })?;
         }
+
+        self.update_graph()?;
 
         Ok(())
     }
@@ -183,7 +186,13 @@ impl RenderGraph for MovementGraph {
         for item in &self.items {
             let prefix = match item.item_type {
                 GraphItemType::Section => "- ",
-                GraphItemType::Item => "- [ ] ",
+                GraphItemType::Item { done } => {
+                    if done {
+                        "- [x]"
+                    } else {
+                        "- [ ]"
+                    }
+                }
             };
 
             match items.split_first().map(|(first, rest)| {
@@ -241,8 +250,14 @@ impl RenderGraph for MovementGraph {
 
         for item in &self.items {
             let prefix = match item.item_type {
-                GraphItemType::Section => "- ",
-                GraphItemType::Item => "- [ ] ",
+                GraphItemType::Section => "-",
+                GraphItemType::Item { done } => {
+                    if done {
+                        "- [x]"
+                    } else {
+                        "- [ ]"
+                    }
+                }
             };
             match items.split_first().map(|(first, rest)| {
                 if item.index == *first {
@@ -314,7 +329,7 @@ impl<'a> StatefulWidget for GraphExplorer<'a> {
 #[derive(PartialEq, Eq, Debug, Clone)]
 enum GraphItemType {
     Section,
-    Item,
+    Item { done: bool },
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -429,7 +444,9 @@ impl From<GraphItem> for MovementGraph {
                         item_type: match value.deref() {
                             GraphItem::User(_) => GraphItemType::Section,
                             GraphItem::Section(_) => GraphItemType::Section,
-                            GraphItem::Item { .. } => GraphItemType::Item,
+                            GraphItem::Item { state, .. } => GraphItemType::Item {
+                                done: matches!(state, ItemState::Done),
+                            },
                         },
                     })
                     .collect::<Vec<_>>();
@@ -539,13 +556,13 @@ mod test {
                                             index: 0,
                                             name: "010".into(),
                                             values: MovementGraph::default(),
-                                            item_type: GraphItemType::Item,
+                                            item_type: GraphItemType::Item { done: false },
                                         },
                                         MovementGraphItem {
                                             index: 1,
                                             name: "011".into(),
                                             values: MovementGraph::default(),
-                                            item_type: GraphItemType::Item,
+                                            item_type: GraphItemType::Item { done: false },
                                         },
                                     ]
                                 }
