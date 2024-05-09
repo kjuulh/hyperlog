@@ -4,11 +4,8 @@ use ratatui::{
 };
 
 use crate::{
-    command_parser::{CommandParser, Commands},
-    commands::IntoCommand,
-    components::GraphExplorer,
-    state::SharedState,
-    Msg,
+    command_parser::CommandParser, commands::IntoCommand, components::GraphExplorer,
+    state::SharedState, Msg,
 };
 
 use self::{

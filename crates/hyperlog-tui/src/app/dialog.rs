@@ -68,12 +68,13 @@ impl BufferState {
     }
 }
 
+#[derive(Default)]
 pub struct InputBuffer {
     pub state: BufferState,
 }
 
 impl InputBuffer {
-    fn to_focused(&mut self) {
+    fn transform_focused(&mut self) {
         match &mut self.state {
             BufferState::Focused { .. } => {}
             BufferState::Static { content, position } => {
@@ -85,7 +86,7 @@ impl InputBuffer {
         }
     }
 
-    fn to_static(&mut self) {
+    fn transform_static(&mut self) {
         match &mut self.state {
             BufferState::Focused { content, position } => {
                 self.state = BufferState::Static {
@@ -97,6 +98,7 @@ impl InputBuffer {
         }
     }
 
+    #[allow(dead_code)]
     pub fn toggle(&mut self) {
         match &mut self.state {
             BufferState::Focused { content, position } => {
@@ -116,9 +118,9 @@ impl InputBuffer {
 
     pub fn update(&mut self, msg: &Msg) -> anyhow::Result<()> {
         match msg {
-            Msg::EnterInsertMode => self.to_focused(),
-            Msg::EnterCommandMode => self.to_focused(),
-            Msg::EnterViewMode => self.to_static(),
+            Msg::EnterInsertMode => self.transform_focused(),
+            Msg::EnterCommandMode => self.transform_focused(),
+            Msg::EnterViewMode => self.transform_static(),
             Msg::Edit(c) => {
                 self.state.update(c)?;
             }
@@ -132,14 +134,6 @@ impl InputBuffer {
         match &self.state {
             BufferState::Focused { ref content, .. } => content.to_string(),
             BufferState::Static { content, .. } => content.to_owned(),
-        }
-    }
-}
-
-impl Default for InputBuffer {
-    fn default() -> Self {
-        Self {
-            state: BufferState::default(),
         }
     }
 }
