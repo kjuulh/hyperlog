@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use ratatui::{prelude::*, widgets::*};
 
 use crate::models::{EditMsg, Msg};
@@ -204,8 +205,10 @@ impl Default for CreateItemFocused {
     }
 }
 
-#[derive(Default)]
 pub struct CreateItemState {
+    root: String,
+    path: Vec<String>,
+
     title: InputBuffer,
     description: InputBuffer,
 
@@ -213,6 +216,20 @@ pub struct CreateItemState {
 }
 
 impl CreateItemState {
+    pub fn new(root: impl Into<String>, path: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        let root = root.into();
+        let path = path.into_iter().map(|p| p.into()).collect_vec();
+
+        Self {
+            root,
+            path,
+
+            title: Default::default(),
+            description: Default::default(),
+            focused: Default::default(),
+        }
+    }
+
     pub fn update(&mut self, msg: &Msg) -> anyhow::Result<()> {
         match &msg {
             Msg::MoveDown | Msg::MoveUp => match self.focused {
@@ -232,6 +249,26 @@ impl CreateItemState {
         }
 
         Ok(())
+    }
+
+    pub fn get_command(&self) -> Option<hyperlog_core::commander::Command> {
+        let title = self.title.string();
+        let description = self.description.string();
+
+        if !title.is_empty() {
+            let mut path = self.path.clone();
+            path.push(title.replace(' ', "").replace('.', "-"));
+
+            Some(hyperlog_core::commander::Command::CreateItem {
+                root: self.root.clone(),
+                path,
+                title: title.trim().into(),
+                description: description.trim().into(),
+                state: hyperlog_core::log::ItemState::NotDone,
+            })
+        } else {
+            None
+        }
     }
 }
 

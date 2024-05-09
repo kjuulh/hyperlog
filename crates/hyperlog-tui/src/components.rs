@@ -126,6 +126,17 @@ impl GraphExplorer<'_> {
 
         Ok(())
     }
+
+    pub(crate) fn get_current_path(&self) -> Vec<String> {
+        let graph = self.linearize_graph();
+        let position_items = &self.inner.current_position;
+
+        if let Some(graph) = graph {
+            graph.to_current_path(position_items)
+        } else {
+            Vec::new()
+        }
+    }
 }
 
 trait RenderGraph {
@@ -330,6 +341,22 @@ impl MovementGraph {
                 None => Some(self),
             },
             None => Some(self),
+        }
+    }
+
+    fn to_current_path(&self, position_items: &[usize]) -> Vec<String> {
+        match position_items.split_first() {
+            Some((first, rest)) => match self.items.get(*first) {
+                Some(item) => {
+                    let mut current = vec![item.name.clone()];
+                    let mut next = item.values.to_current_path(rest);
+                    current.append(&mut next);
+
+                    current
+                }
+                None => Vec::new(),
+            },
+            None => Vec::new(),
         }
     }
 }

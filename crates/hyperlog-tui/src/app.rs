@@ -3,7 +3,10 @@ use ratatui::{
     widgets::{Block, Borders, Padding, Paragraph},
 };
 
-use crate::{commands::IntoCommand, components::GraphExplorer, state::SharedState, Msg};
+use crate::{
+    command_parser::CommandParser, commands::IntoCommand, components::GraphExplorer,
+    state::SharedState, Msg,
+};
 
 use self::{
     command_bar::{CommandBar, CommandBarState},
@@ -17,6 +20,14 @@ pub enum Dialog {
     CreateItem { state: CreateItemState },
 }
 
+impl Dialog {
+    pub fn get_command(&self) -> Option<hyperlog_core::commander::Command> {
+        match self {
+            Dialog::CreateItem { state } => state.get_command(),
+        }
+    }
+}
+
 pub enum Mode {
     View,
     Insert,
@@ -24,6 +35,8 @@ pub enum Mode {
 }
 
 pub struct App<'a> {
+    root: String,
+
     state: SharedState,
 
     pub mode: Mode,
@@ -34,8 +47,13 @@ pub struct App<'a> {
 }
 
 impl<'a> App<'a> {
-    pub fn new(state: SharedState, graph_explorer: GraphExplorer<'a>) -> Self {
+    pub fn new(
+        root: impl Into<String>,
+        state: SharedState,
+        graph_explorer: GraphExplorer<'a>,
+    ) -> Self {
         Self {
+            root: root.into(),
             mode: Mode::View,
             dialog: None,
             command: None,
@@ -62,8 +80,22 @@ impl<'a> App<'a> {
             Msg::SubmitCommand { command } => {
                 tracing::info!("submitting command");
 
-                self.command = None;
+                if let Some(command) = CommandParser::parse(&command) {
+                    if command.is_write() {
+                        if let Some(dialog) = &self.dialog {
+                            if let Some(output) = dialog.get_command() {
+                                self.state.commander.execute(output)?;
+                            }
+                        }
+                    }
 
+                    self.graph_explorer.update_graph()?;
+
+                    if command.is_quit() {
+                        self.dialog = None;
+                    }
+                }
+                self.command = None;
                 return Ok(Msg::EnterViewMode.into_command());
             }
             _ => {}
@@ -83,8 +115,11 @@ impl<'a> App<'a> {
 
     fn open_dialog(&mut self) {
         if self.dialog.is_none() {
+            let root = self.root.clone();
+            let path = self.graph_explorer.get_current_path();
+
             self.dialog = Some(Dialog::CreateItem {
-                state: CreateItemState::default(),
+                state: CreateItemState::new(root, path),
             });
         }
     }

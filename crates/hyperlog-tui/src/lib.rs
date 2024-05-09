@@ -16,6 +16,7 @@ use crate::{state::SharedState, terminal::TerminalInstance};
 pub mod models;
 
 pub(crate) mod app;
+pub(crate) mod command_parser;
 pub(crate) mod commands;
 pub(crate) mod components;
 pub(crate) mod state;
@@ -41,7 +42,7 @@ fn run(terminal: &mut Terminal<CrosstermBackend<Stdout>>, state: SharedState) ->
     let mut graph_explorer = GraphExplorer::new(state.clone());
     graph_explorer.update_graph()?;
 
-    let mut app = App::new(state.clone(), graph_explorer);
+    let mut app = App::new("kjuulh", state.clone(), graph_explorer);
 
     loop {
         terminal.draw(|f| render_app(f, &mut app))?;
