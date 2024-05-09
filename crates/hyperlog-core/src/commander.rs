@@ -25,6 +25,10 @@ pub enum Command {
         description: String,
         state: ItemState,
     },
+    ToggleItem {
+        root: String,
+        path: Vec<String>,
+    },
     Move {
         root: String,
         src: Vec<String>,
@@ -81,6 +85,9 @@ impl Commander {
                 &src.iter().map(|p| p.as_str()).collect::<Vec<_>>(),
                 &dest.iter().map(|p| p.as_str()).collect::<Vec<_>>(),
             )?,
+            Command::ToggleItem { root, path } => self
+                .engine
+                .toggle_item(&root, &path.iter().map(|p| p.as_str()).collect::<Vec<_>>())?,
         }
 
         self.storage.store(&self.engine)?;

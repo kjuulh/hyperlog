@@ -63,12 +63,15 @@ impl<'a> App<'a> {
         graph_explorer: GraphExplorer<'a>,
     ) -> Self {
         Self {
+            state,
             root: root.into(),
-            mode: Mode::View,
+
             dialog: None,
             command: None,
-            state,
+
             graph_explorer,
+
+            mode: Mode::View,
             focus: AppFocus::Graph,
         }
     }
@@ -109,6 +112,7 @@ impl<'a> App<'a> {
                             }
 
                             if command.is_quit() {
+                                self.focus = AppFocus::Graph;
                                 self.dialog = None;
                             }
                         }
@@ -138,6 +142,7 @@ impl<'a> App<'a> {
             let root = self.root.clone();
             let path = self.graph_explorer.get_current_path();
 
+            self.focus = AppFocus::Dialog;
             self.dialog = Some(Dialog::CreateItem {
                 state: CreateItemState::new(root, path),
             });
@@ -151,7 +156,7 @@ impl<'a> Widget for &mut App<'a> {
         Self: Sized,
     {
         StatefulWidget::render(
-            GraphExplorer::new(self.state.clone()),
+            GraphExplorer::new(self.root.clone(), self.state.clone()),
             area,
             buf,
             &mut self.graph_explorer.inner,

@@ -39,10 +39,12 @@ pub async fn execute(state: State) -> Result<()> {
 }
 
 fn run(terminal: &mut Terminal<CrosstermBackend<Stdout>>, state: SharedState) -> Result<()> {
-    let mut graph_explorer = GraphExplorer::new(state.clone());
+    let root = "kjuulh".to_string();
+
+    let mut graph_explorer = GraphExplorer::new(root.clone(), state.clone());
     graph_explorer.update_graph()?;
 
-    let mut app = App::new("kjuulh", state.clone(), graph_explorer);
+    let mut app = App::new(&root, state.clone(), graph_explorer);
 
     loop {
         terminal.draw(|f| render_app(f, &mut app))?;

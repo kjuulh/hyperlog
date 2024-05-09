@@ -2,7 +2,7 @@ use std::{collections::BTreeMap, fmt::Display};
 
 use anyhow::{anyhow, Context};
 
-use crate::log::{Graph, GraphItem};
+use crate::log::{Graph, GraphItem, ItemState};
 
 #[derive(Default)]
 pub struct Engine {
@@ -128,6 +128,22 @@ impl Engine {
         self.take(root, path)
             .map(|_| ())
             .ok_or(anyhow!("item was not found"))
+    }
+
+    pub fn toggle_item(&mut self, root: &str, path: &[&str]) -> anyhow::Result<()> {
+        if let Some(item) = self.get_mut(root, path) {
+            match item {
+                GraphItem::Item { state, .. } => match state {
+                    ItemState::NotDone => *state = ItemState::Done,
+                    ItemState::Done => *state = ItemState::NotDone,
+                },
+                _ => {
+                    anyhow::bail!("{}.{:?} is not an item", root, path)
+                }
+            }
+        }
+
+        Ok(())
     }
 }
 

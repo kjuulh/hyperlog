@@ -5,7 +5,7 @@ use hyperlog_core::log::GraphItem;
 use itertools::Itertools;
 use ratatui::{prelude::*, widgets::*};
 
-use crate::{command_parser::Commands, state::SharedState};
+use crate::{command_parser::Commands, commands::Command, state::SharedState};
 
 pub struct GraphExplorer<'a> {
     state: SharedState,
@@ -14,17 +14,20 @@ pub struct GraphExplorer<'a> {
 }
 
 pub struct GraphExplorerState<'a> {
+    root: String,
+
     current_path: Option<&'a str>,
     current_position: Vec<usize>,
 
     graph: Option<GraphItem>,
 }
 
-impl GraphExplorer<'_> {
-    pub fn new(state: SharedState) -> Self {
+impl<'a> GraphExplorer<'a> {
+    pub fn new(root: String, state: SharedState) -> Self {
         Self {
             state,
-            inner: GraphExplorerState::<'_> {
+            inner: GraphExplorerState::<'a> {
+                root,
                 current_path: None,
                 current_position: Vec::new(),
                 graph: None,
@@ -151,6 +154,13 @@ impl GraphExplorer<'_> {
     pub(crate) fn interact(&mut self) -> anyhow::Result<()> {
         if !self.get_current_path().is_empty() {
             tracing::info!("toggling state of items");
+
+            self.state
+                .commander
+                .execute(hyperlog_core::commander::Command::ToggleItem {
+                    root: self.inner.root.to_string(),
+                    path: self.get_current_path(),
+                })?;
         }
 
         Ok(())

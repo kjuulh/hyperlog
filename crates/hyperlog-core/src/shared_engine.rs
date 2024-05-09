@@ -43,4 +43,10 @@ impl SharedEngine {
             .unwrap()
             .section_move(root, src_path, dest_path)
     }
+
+    pub fn toggle_item(&self, root: &str, path: &[&str]) -> anyhow::Result<()> {
+        self.inner.write().unwrap().toggle_item(root, path)?;
+
+        Ok(())
+    }
 }
