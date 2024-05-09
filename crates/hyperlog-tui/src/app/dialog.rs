@@ -285,8 +285,17 @@ impl StatefulWidget for &mut CreateItem {
     type State = CreateItemState;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        let chunks =
-            Layout::vertical(vec![Constraint::Length(3), Constraint::Length(3)]).split(area);
+        let chunks = Layout::vertical(vec![
+            Constraint::Length(2),
+            Constraint::Length(3),
+            Constraint::Length(3),
+        ])
+        .split(area);
+
+        let path = format!("path: {}.{}", state.root, state.path.join("."));
+        let path_header = Paragraph::new(path).dark_gray();
+        path_header.render(chunks[0], buf);
+
         let mut title_input = InputField::new("title");
         let mut description_input = InputField::new("description");
 
@@ -295,8 +304,8 @@ impl StatefulWidget for &mut CreateItem {
             CreateItemFocused::Description => description_input.focused = true,
         }
 
-        title_input.render(chunks[0], buf, &mut state.title);
-        description_input.render(chunks[1], buf, &mut state.description);
+        title_input.render(chunks[1], buf, &mut state.title);
+        description_input.render(chunks[2], buf, &mut state.description);
 
         // let title = Paragraph::new("something"); //.block(block);
 
