@@ -1,7 +1,7 @@
 # hyperlog
 
 - [x] Display todos as todos
-- [ ] Create sections
+- [x] Create sections
 - [ ] Edit todos
 - [ ] Move items
 - [ ] Display summaries and limit todos
