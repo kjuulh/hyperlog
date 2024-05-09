@@ -13,5 +13,5 @@ tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 clap = { version = "4", features = ["derive", "env"] }
 dotenv = { version = "0.15" }
 axum = { version = "0.7" }
-serde_json = "1.0.116"
+serde_json = "1.0.117"
 itertools = "0.12.1"
