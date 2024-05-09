@@ -7,6 +7,7 @@ pub enum Msg {
     MoveDown,
     MoveUp,
     OpenCreateItemDialog,
+    Interact,
 
     EnterInsertMode,
     EnterViewMode,

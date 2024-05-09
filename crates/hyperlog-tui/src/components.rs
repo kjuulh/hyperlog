@@ -5,7 +5,7 @@ use hyperlog_core::log::GraphItem;
 use itertools::Itertools;
 use ratatui::{prelude::*, widgets::*};
 
-use crate::state::SharedState;
+use crate::{command_parser::Commands, state::SharedState};
 
 pub struct GraphExplorer<'a> {
     state: SharedState,
@@ -137,6 +137,24 @@ impl GraphExplorer<'_> {
             Vec::new()
         }
     }
+
+    pub fn execute_command(&self, command: &Commands) -> anyhow::Result<()> {
+        if let Commands::Archive = command {
+            if !self.get_current_path().is_empty() {
+                tracing::debug!("archiving path: {:?}", self.get_current_path())
+            }
+        }
+
+        Ok(())
+    }
+
+    pub(crate) fn interact(&mut self) -> anyhow::Result<()> {
+        if !self.get_current_path().is_empty() {
+            tracing::info!("toggling state of items");
+        }
+
+        Ok(())
+    }
 }
 
 trait RenderGraph {
@@ -153,6 +171,11 @@ impl RenderGraph for MovementGraph {
         let mut lines = Vec::new();
 
         for item in &self.items {
+            let prefix = match item.item_type {
+                GraphItemType::Section => "- ",
+                GraphItemType::Item => "- [ ] ",
+            };
+
             match items.split_first().map(|(first, rest)| {
                 if item.index == *first {
                     (true, rest)
@@ -163,12 +186,12 @@ impl RenderGraph for MovementGraph {
                 Some((true, rest)) => {
                     if rest.is_empty() {
                         lines.push(
-                            Line::raw(format!("- {}", item.name))
+                            Line::raw(format!("{} {}", prefix, item.name))
                                 .style(Style::new().bold().white()),
                         );
                     } else {
                         lines.push(
-                            Line::raw(format!("- {}", item.name))
+                            Line::raw(format!("{} {}", prefix, item.name))
                                 .patch_style(Style::new().dark_gray()),
                         );
                     }
@@ -184,7 +207,8 @@ impl RenderGraph for MovementGraph {
                 }
                 _ => {
                     lines.push(
-                        Line::raw(format!("- {}", item.name)).patch_style(Style::new().dark_gray()),
+                        Line::raw(format!("{} {}", prefix, item.name))
+                            .patch_style(Style::new().dark_gray()),
                     );
 
                     lines.push("".into());
@@ -206,6 +230,10 @@ impl RenderGraph for MovementGraph {
         let mut lines = Vec::new();
 
         for item in &self.items {
+            let prefix = match item.item_type {
+                GraphItemType::Section => "- ",
+                GraphItemType::Item => "- [ ] ",
+            };
             match items.split_first().map(|(first, rest)| {
                 if item.index == *first {
                     (true, rest)
@@ -217,12 +245,12 @@ impl RenderGraph for MovementGraph {
                     let mut line = Vec::new();
                     if rest.is_empty() {
                         line.push(
-                            Span::raw(format!("- {}", item.name))
+                            Span::raw(format!("{} {}", prefix, item.name))
                                 .style(Style::new().bold().white()),
                         );
                     } else {
                         line.push(
-                            Span::raw(format!("- {}", item.name))
+                            Span::raw(format!("{} {}", prefix, item.name))
                                 .patch_style(Style::new().dark_gray()),
                         );
                     }
@@ -238,9 +266,8 @@ impl RenderGraph for MovementGraph {
                     }
                 }
                 _ => {
-                    lines
-                        .push(vec![Span::raw(format!("- {}", item.name))
-                            .patch_style(Style::new().dark_gray())]);
+                    lines.push(vec![Span::raw(format!("{prefix} {}", item.name))
+                        .patch_style(Style::new().dark_gray())]);
 
                     lines.push(vec!["".into()]);
 
@@ -275,10 +302,18 @@ impl<'a> StatefulWidget for GraphExplorer<'a> {
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
+enum GraphItemType {
+    Section,
+    Item,
+}
+
+#[derive(PartialEq, Eq, Debug, Clone)]
 struct MovementGraphItem {
     index: usize,
     name: String,
     values: MovementGraph,
+
+    item_type: GraphItemType,
 }
 
 #[derive(Default, PartialEq, Eq, Debug, Clone)]
@@ -381,6 +416,11 @@ impl From<GraphItem> for MovementGraph {
                         index: i,
                         name: key.clone(),
                         values: value.clone().into(),
+                        item_type: match value.deref() {
+                            GraphItem::User(_) => GraphItemType::Section,
+                            GraphItem::Section(_) => GraphItemType::Section,
+                            GraphItem::Item { .. } => GraphItemType::Item,
+                        },
                     })
                     .collect::<Vec<_>>();
 
@@ -400,7 +440,7 @@ mod test {
     use hyperlog_core::log::{GraphItem, ItemState};
     use similar_asserts::assert_eq;
 
-    use crate::components::MovementGraphItem;
+    use crate::components::{GraphItemType, MovementGraphItem};
 
     use super::MovementGraph;
 
@@ -470,27 +510,32 @@ mod test {
                 items: vec![MovementGraphItem {
                     index: 0,
                     name: "0".into(),
+                    item_type: GraphItemType::Section,
                     values: MovementGraph {
                         items: vec![
                             MovementGraphItem {
                                 index: 0,
                                 name: "00".into(),
                                 values: MovementGraph::default(),
+                                item_type: GraphItemType::Section,
                             },
                             MovementGraphItem {
                                 index: 1,
                                 name: "01".into(),
+                                item_type: GraphItemType::Section,
                                 values: MovementGraph {
                                     items: vec![
                                         MovementGraphItem {
                                             index: 0,
                                             name: "010".into(),
                                             values: MovementGraph::default(),
+                                            item_type: GraphItemType::Item,
                                         },
                                         MovementGraphItem {
                                             index: 1,
                                             name: "011".into(),
                                             values: MovementGraph::default(),
+                                            item_type: GraphItemType::Item,
                                         },
                                     ]
                                 }
@@ -510,17 +555,20 @@ mod test {
                 MovementGraphItem {
                     index: 0,
                     name: "0".into(),
+                    item_type: GraphItemType::Section,
                     values: MovementGraph {
                         items: vec![
                             MovementGraphItem {
                                 index: 0,
                                 name: "0".into(),
                                 values: MovementGraph::default(),
+                                item_type: GraphItemType::Section,
                             },
                             MovementGraphItem {
                                 index: 1,
                                 name: "0".into(),
                                 values: MovementGraph::default(),
+                                item_type: GraphItemType::Section,
                             },
                         ],
                     },
@@ -528,22 +576,26 @@ mod test {
                 MovementGraphItem {
                     index: 1,
                     name: "0".into(),
+                    item_type: GraphItemType::Section,
                     values: MovementGraph {
                         items: vec![
                             MovementGraphItem {
                                 index: 0,
                                 name: "0".into(),
                                 values: MovementGraph::default(),
+                                item_type: GraphItemType::Section,
                             },
                             MovementGraphItem {
                                 index: 1,
                                 name: "0".into(),
                                 values: MovementGraph::default(),
+                                item_type: GraphItemType::Section,
                             },
                             MovementGraphItem {
                                 index: 2,
                                 name: "0".into(),
                                 values: MovementGraph::default(),
+                                item_type: GraphItemType::Section,
                             },
                         ],
                     },
@@ -551,17 +603,20 @@ mod test {
                 MovementGraphItem {
                     index: 2,
                     name: "0".into(),
+                    item_type: GraphItemType::Section,
                     values: MovementGraph {
                         items: vec![
                             MovementGraphItem {
                                 index: 0,
                                 name: "0".into(),
                                 values: MovementGraph::default(),
+                                item_type: GraphItemType::Section,
                             },
                             MovementGraphItem {
                                 index: 1,
                                 name: "0".into(),
                                 values: MovementGraph::default(),
+                                item_type: GraphItemType::Section,
                             },
                         ],
                     },
@@ -618,10 +673,12 @@ mod test {
                 MovementGraphItem {
                     index: 0,
                     name: "0".into(),
+                    item_type: GraphItemType::Section,
                     values: MovementGraph {
                         items: vec![MovementGraphItem {
                             index: 0,
                             name: "0".into(),
+                            item_type: GraphItemType::Section,
                             values: MovementGraph::default(),
                         }],
                     },
@@ -629,16 +686,19 @@ mod test {
                 MovementGraphItem {
                     index: 1,
                     name: "1".into(),
+                    item_type: GraphItemType::Section,
                     values: MovementGraph {
                         items: vec![
                             MovementGraphItem {
                                 index: 0,
                                 name: "0".into(),
+                                item_type: GraphItemType::Section,
                                 values: MovementGraph::default(),
                             },
                             MovementGraphItem {
                                 index: 1,
                                 name: "1".into(),
+                                item_type: GraphItemType::Section,
                                 values: MovementGraph::default(),
                             },
                         ],
@@ -647,21 +707,25 @@ mod test {
                 MovementGraphItem {
                     index: 2,
                     name: "2".into(),
+                    item_type: GraphItemType::Section,
                     values: MovementGraph {
                         items: vec![
                             MovementGraphItem {
                                 index: 0,
                                 name: "0".into(),
+                                item_type: GraphItemType::Section,
                                 values: MovementGraph::default(),
                             },
                             MovementGraphItem {
                                 index: 1,
                                 name: "1".into(),
+                                item_type: GraphItemType::Section,
                                 values: MovementGraph::default(),
                             },
                             MovementGraphItem {
                                 index: 2,
                                 name: "2".into(),
+                                item_type: GraphItemType::Section,
                                 values: MovementGraph::default(),
                             },
                         ],
@@ -687,14 +751,17 @@ mod test {
                 MovementGraphItem {
                     index: 0,
                     name: "other".into(),
+                    item_type: GraphItemType::Section,
                     values: MovementGraph {
                         items: vec![MovementGraphItem {
                             index: 0,
                             name: "other".into(),
+                            item_type: GraphItemType::Section,
                             values: MovementGraph {
                                 items: vec![MovementGraphItem {
                                     index: 0,
                                     name: "other".into(),
+                                    item_type: GraphItemType::Section,
                                     values: MovementGraph { items: vec![] },
                                 }],
                             },
@@ -704,21 +771,25 @@ mod test {
                 MovementGraphItem {
                     index: 1,
                     name: "some".into(),
+                    item_type: GraphItemType::Section,
                     values: MovementGraph { items: vec![] },
                 },
                 MovementGraphItem {
                     index: 2,
                     name: "something".into(),
+                    item_type: GraphItemType::Section,
                     values: MovementGraph {
                         items: vec![
                             MovementGraphItem {
                                 index: 0,
                                 name: "else".into(),
+                                item_type: GraphItemType::Section,
                                 values: MovementGraph { items: vec![] },
                             },
                             MovementGraphItem {
                                 index: 1,
                                 name: "third".into(),
+                                item_type: GraphItemType::Section,
                                 values: MovementGraph { items: vec![] },
                             },
                         ],

@@ -74,6 +74,7 @@ fn update(
         if let Event::Key(key) = event::read().context("event read failed")? {
             let mut cmd = match &app.mode {
                 app::Mode::View => match key.code {
+                    KeyCode::Enter => app.update(Msg::Interact)?,
                     KeyCode::Char('q') => return Ok(UpdateConclusion::new(true)),
                     KeyCode::Char('l') => app.update(Msg::MoveRight)?,
                     KeyCode::Char('h') => app.update(Msg::MoveLeft)?,

@@ -4,8 +4,11 @@ use ratatui::{
 };
 
 use crate::{
-    command_parser::CommandParser, commands::IntoCommand, components::GraphExplorer,
-    state::SharedState, Msg,
+    command_parser::{CommandParser, Commands},
+    commands::IntoCommand,
+    components::GraphExplorer,
+    state::SharedState,
+    Msg,
 };
 
 use self::{
@@ -34,6 +37,11 @@ pub enum Mode {
     Command,
 }
 
+pub enum AppFocus {
+    Dialog,
+    Graph,
+}
+
 pub struct App<'a> {
     root: String,
 
@@ -44,6 +52,8 @@ pub struct App<'a> {
     command: Option<CommandBarState>,
 
     graph_explorer: GraphExplorer<'a>,
+
+    focus: AppFocus,
 }
 
 impl<'a> App<'a> {
@@ -59,6 +69,7 @@ impl<'a> App<'a> {
             command: None,
             state,
             graph_explorer,
+            focus: AppFocus::Graph,
         }
     }
 
@@ -77,22 +88,31 @@ impl<'a> App<'a> {
                 self.command = Some(CommandBarState::default());
                 self.mode = Mode::Command
             }
+            Msg::Interact => match self.focus {
+                AppFocus::Dialog => {}
+                AppFocus::Graph => self.graph_explorer.interact()?,
+            },
             Msg::SubmitCommand { command } => {
                 tracing::info!("submitting command");
 
                 if let Some(command) = CommandParser::parse(&command) {
-                    if command.is_write() {
-                        if let Some(dialog) = &self.dialog {
-                            if let Some(output) = dialog.get_command() {
-                                self.state.commander.execute(output)?;
+                    match self.focus {
+                        AppFocus::Dialog => {
+                            if command.is_write() {
+                                if let Some(dialog) = &self.dialog {
+                                    if let Some(output) = dialog.get_command() {
+                                        self.state.commander.execute(output)?;
+                                    }
+                                }
+
+                                self.graph_explorer.update_graph()?;
+                            }
+
+                            if command.is_quit() {
+                                self.dialog = None;
                             }
                         }
-                    }
-
-                    self.graph_explorer.update_graph()?;
-
-                    if command.is_quit() {
-                        self.dialog = None;
+                        AppFocus::Graph => self.graph_explorer.execute_command(&command)?,
                     }
                 }
                 self.command = None;

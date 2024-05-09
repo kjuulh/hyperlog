@@ -4,6 +4,7 @@ pub enum Commands {
     Write,
     Quit,
     WriteQuit,
+    Archive,
 }
 
 impl Commands {
@@ -29,6 +30,7 @@ impl CommandParser {
                 "w" | "write" => Some(Commands::Write),
                 "q" | "quit" => Some(Commands::Quit),
                 "wq" | "write-quit" => Some(Commands::WriteQuit),
+                "a" | "archive" => Some(Commands::Archive),
                 _ => None,
             },
             None => None,
