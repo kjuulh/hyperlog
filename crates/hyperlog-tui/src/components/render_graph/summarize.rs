@@ -2,6 +2,9 @@ use crate::components::movement_graph::{GraphItemType, MovementGraph, MovementGr
 use itertools::Itertools;
 use ratatui::prelude::*;
 
+const green: Color = Color::Rgb(127, 255, 0);
+const orange: Color = Color::Rgb(255, 165, 0);
+
 pub trait Summarize {
     fn heading(&self) -> Vec<Span>;
     fn brief(&self) -> Vec<Vec<Span>>;
@@ -23,28 +26,40 @@ impl Summarize for MovementGraphItem {
                 ]
             }
             GraphItemType::Item { done } => {
-                vec![Span::from(if done { "[x] " } else { "[ ] " }), name]
+                if done {
+                    vec![
+                        Span::from("["),
+                        Span::from("x").fg(green),
+                        Span::from("] "),
+                        name,
+                    ]
+                } else {
+                    vec![Span::from("[ ] "), name]
+                }
             }
         }
     }
 
     fn brief(&self) -> Vec<Vec<Span>> {
         let heading = self.heading();
+        let mut output = vec![heading];
 
         let items = &self.values.items;
 
-        let items = if items.len() > 2 {
-            vec![items.first().unwrap(), items.last().unwrap()]
+        let mut items = if items.len() > 2 {
+            vec![
+                items.first().unwrap().heading(),
+                vec![Span::from("...").fg(Color::DarkGray)],
+                items.last().unwrap().heading(),
+                vec![Span::raw("")],
+            ]
         } else {
-            items.iter().collect()
+            items.iter().map(|i| i.heading()).collect()
         };
 
-        let mut output = vec![heading];
-
-        for item in items {
-            let mut heading = item.heading();
-            heading.insert(0, Span::from(" ".repeat(4)));
-            output.push(heading);
+        for mut item in items {
+            item.insert(0, Span::from(" ".repeat(4)));
+            output.push(item);
         }
 
         output
@@ -54,7 +69,13 @@ impl Summarize for MovementGraphItem {
         let heading = self
             .heading()
             .into_iter()
-            .map(|h| if selected { h.bold() } else { h })
+            .map(|h| {
+                if selected {
+                    h.patch_style(Style::new().fg(orange))
+                } else {
+                    h
+                }
+            })
             .collect_vec();
 
         let items = &self.values.items;
@@ -66,6 +87,10 @@ impl Summarize for MovementGraphItem {
                 brief.insert(0, Span::from(" ".repeat(4)));
                 output.push(brief);
             }
+        }
+
+        if !items.is_empty() {
+            output.push(vec![Span::raw("")]);
         }
 
         output
