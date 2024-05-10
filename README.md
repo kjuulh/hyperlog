@@ -7,5 +7,6 @@
 - [x] Display summaries and limit todos
   - [-] Implement scroll
     > Maybe not required anyways
-- [ ] Create onboarding experience
-- [ ] Let users choose a root
+- [x] Create onboarding experience
+- [-] Let users choose a root
+  > Skipped for now
