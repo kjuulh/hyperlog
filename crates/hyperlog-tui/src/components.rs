@@ -5,7 +5,7 @@ use hyperlog_core::log::{GraphItem, ItemState};
 use itertools::Itertools;
 use ratatui::{prelude::*, widgets::*};
 
-use crate::{command_parser::Commands, state::SharedState};
+use crate::{command_parser::Commands, models::Msg, state::SharedState};
 
 pub struct GraphExplorer<'a> {
     state: SharedState,
@@ -145,7 +145,17 @@ impl<'a> GraphExplorer<'a> {
         }
     }
 
-    pub fn execute_command(&mut self, command: &Commands) -> anyhow::Result<()> {
+    fn get_current_item(&self) -> Option<MovementGraphItem> {
+        let graph = self.linearize_graph();
+
+        if let Some(graph) = graph {
+            graph.get_graph_item(&self.inner.current_position).cloned()
+        } else {
+            None
+        }
+    }
+
+    pub fn execute_command(&mut self, command: &Commands) -> anyhow::Result<Option<Msg>> {
         match command {
             Commands::Archive => {
                 if !self.get_current_path().is_empty() {
@@ -165,12 +175,35 @@ impl<'a> GraphExplorer<'a> {
                     )?;
                 }
             }
+            Commands::Edit => {
+                if let Some(item) = self.get_current_item() {
+                    let path = self.get_current_path();
+
+                    tracing::debug!(
+                        "found item to edit: path: {}, item: {}",
+                        path.join("."),
+                        item.name
+                    );
+                    match item.item_type {
+                        GraphItemType::Section => {
+                            todo!("cannot edit section at the moment")
+                        }
+                        GraphItemType::Item { .. } => {
+                            if let Some(item) = self.state.querier.get(&self.inner.root, path) {
+                                if let GraphItem::Item { .. } = item {
+                                    return Ok(Some(Msg::OpenEditItemDialog { item }));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             _ => (),
         }
 
         self.update_graph()?;
 
-        Ok(())
+        Ok(None)
     }
 
     pub(crate) fn interact(&mut self) -> anyhow::Result<()> {
@@ -240,7 +273,7 @@ impl RenderGraph for MovementGraph {
 
                     let embedded_sections = item.values.render_graph_spans(rest);
                     for section in &embedded_sections {
-                        let mut line = vec![Span::raw("  ")];
+                        let mut line = vec![Span::raw(" ".repeat(4))];
                         line.extend_from_slice(section);
                         lines.push(Line::from(line));
                     }
@@ -255,7 +288,7 @@ impl RenderGraph for MovementGraph {
 
                     let embedded_sections = item.values.render_graph_spans(&[]);
                     for section in &embedded_sections {
-                        let mut line = vec![Span::raw("  ")];
+                        let mut line = vec![Span::raw(" ".repeat(4))];
                         line.extend_from_slice(section);
                         lines.push(Line::from(line));
                     }
@@ -306,7 +339,7 @@ impl RenderGraph for MovementGraph {
 
                     let embedded_sections = item.values.render_graph_spans(rest);
                     for section in &embedded_sections {
-                        let mut line = vec![Span::raw("  ")];
+                        let mut line = vec![Span::raw(" ".repeat(4))];
                         line.extend_from_slice(section);
                         lines.push(line);
                     }
@@ -319,7 +352,7 @@ impl RenderGraph for MovementGraph {
 
                     let embedded_sections = item.values.render_graph_spans(&[]);
                     for section in &embedded_sections {
-                        let mut line = vec![Span::raw("  ")];
+                        let mut line = vec![Span::raw(" ".repeat(4))];
                         line.extend_from_slice(section);
                         lines.push(line);
                     }
@@ -396,7 +429,7 @@ impl MovementGraph {
     fn next_down(&self, items: &[usize]) -> Option<Vec<usize>> {
         match items.split_last() {
             Some((current_index, rest)) => {
-                if let Some(current_item) = self.get_graph_item(rest) {
+                if let Some(current_item) = self.get_graph(rest) {
                     if *current_index + 1 < current_item.items.len() {
                         let mut vec = rest.to_vec();
                         vec.push(current_index + 1);
@@ -415,13 +448,26 @@ impl MovementGraph {
         }
     }
 
-    fn get_graph_item(&self, items: &[usize]) -> Option<&MovementGraph> {
+    fn get_graph(&self, items: &[usize]) -> Option<&MovementGraph> {
         match items.split_first() {
             Some((first, rest)) => match self.items.get(*first).map(|s| &s.values) {
-                Some(next_graph) => next_graph.get_graph_item(rest),
+                Some(next_graph) => next_graph.get_graph(rest),
                 None => Some(self),
             },
             None => Some(self),
+        }
+    }
+
+    fn get_graph_item(&self, items: &[usize]) -> Option<&MovementGraphItem> {
+        match items.split_first() {
+            Some((first, rest)) => match self.items.get(*first) {
+                Some(next_graph) => match next_graph.values.get_graph_item(rest) {
+                    Some(graph_item) => Some(graph_item),
+                    None => Some(next_graph),
+                },
+                None => None,
+            },
+            None => None,
         }
     }
 
@@ -462,7 +508,7 @@ impl From<GraphItem> for MovementGraph {
                         index: i,
                         name: key.clone(),
                         values: value.clone().into(),
-                        item_type: match value.deref() {
+                        item_type: match value {
                             GraphItem::User(_) => GraphItemType::Section,
                             GraphItem::Section(_) => GraphItemType::Section,
                             GraphItem::Item { state, .. } => GraphItemType::Item {
@@ -522,33 +568,30 @@ mod test {
     fn test_can_transform_to_movement_graph() {
         let graph = GraphItem::User(BTreeMap::from([(
             "0".to_string(),
-            Box::new(GraphItem::Section(BTreeMap::from([
-                (
-                    "00".to_string(),
-                    Box::new(GraphItem::Section(BTreeMap::new())),
-                ),
+            GraphItem::Section(BTreeMap::from([
+                ("00".to_string(), GraphItem::Section(BTreeMap::new())),
                 (
                     "01".to_string(),
-                    Box::new(GraphItem::Section(BTreeMap::from([
+                    GraphItem::Section(BTreeMap::from([
                         (
                             "010".to_string(),
-                            Box::new(GraphItem::Item {
+                            GraphItem::Item {
                                 title: "some-title".into(),
                                 description: "some-desc".into(),
                                 state: ItemState::NotDone,
-                            }),
+                            },
                         ),
                         (
                             "011".to_string(),
-                            Box::new(GraphItem::Item {
+                            GraphItem::Item {
                                 title: "some-title".into(),
                                 description: "some-desc".into(),
                                 state: ItemState::NotDone,
-                            }),
+                            },
                         ),
-                    ]))),
+                    ])),
                 ),
-            ]))),
+            ])),
         )]));
 
         let actual: MovementGraph = graph.into();
@@ -672,16 +715,16 @@ mod test {
             ],
         };
 
-        let actual_default = graph.get_graph_item(&[]);
+        let actual_default = graph.get_graph(&[]);
         assert_eq!(Some(&graph), actual_default);
 
-        let actual_first = graph.get_graph_item(&[0]);
+        let actual_first = graph.get_graph(&[0]);
         assert_eq!(graph.items.first().map(|i| &i.values), actual_first);
 
-        let actual_second = graph.get_graph_item(&[1]);
+        let actual_second = graph.get_graph(&[1]);
         assert_eq!(graph.items.get(1).map(|i| &i.values), actual_second);
 
-        let actual_nested = graph.get_graph_item(&[0, 0]);
+        let actual_nested = graph.get_graph(&[0, 0]);
         assert_eq!(
             graph
                 .items
@@ -691,7 +734,7 @@ mod test {
             actual_nested
         );
 
-        let actual_nested = graph.get_graph_item(&[0, 1]);
+        let actual_nested = graph.get_graph(&[0, 1]);
         assert_eq!(
             graph
                 .items
@@ -701,7 +744,7 @@ mod test {
             actual_nested
         );
 
-        let actual_nested = graph.get_graph_item(&[1, 2]);
+        let actual_nested = graph.get_graph(&[1, 2]);
         assert_eq!(
             graph
                 .items

@@ -49,4 +49,18 @@ impl SharedEngine {
 
         Ok(())
     }
+
+    pub(crate) fn update_item(
+        &self,
+        root: &str,
+        path: &[&str],
+        state: GraphItem,
+    ) -> anyhow::Result<()> {
+        self.inner
+            .write()
+            .unwrap()
+            .update_item(root, path, &state)?;
+
+        Ok(())
+    }
 }

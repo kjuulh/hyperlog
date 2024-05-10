@@ -1,3 +1,5 @@
+use hyperlog_core::log::GraphItem;
+
 use crate::commands::{Command, IntoCommand};
 
 #[derive(Debug)]
@@ -7,6 +9,7 @@ pub enum Msg {
     MoveDown,
     MoveUp,
     OpenCreateItemDialog,
+    OpenEditItemDialog { item: GraphItem },
     Interact,
 
     EnterInsertMode,

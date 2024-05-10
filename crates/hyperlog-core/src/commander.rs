@@ -25,6 +25,13 @@ pub enum Command {
         description: String,
         state: ItemState,
     },
+    UpdateItem {
+        root: String,
+        path: Vec<String>,
+        title: String,
+        description: String,
+        state: ItemState,
+    },
     ToggleItem {
         root: String,
         path: Vec<String>,
@@ -88,6 +95,21 @@ impl Commander {
             Command::ToggleItem { root, path } => self
                 .engine
                 .toggle_item(&root, &path.iter().map(|p| p.as_str()).collect::<Vec<_>>())?,
+            Command::UpdateItem {
+                root,
+                path,
+                title,
+                description,
+                state,
+            } => self.engine.update_item(
+                &root,
+                &path.iter().map(|p| p.as_str()).collect::<Vec<_>>(),
+                GraphItem::Item {
+                    title,
+                    description,
+                    state,
+                },
+            )?,
         }
 
         self.storage.store(&self.engine)?;

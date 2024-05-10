@@ -1,3 +1,4 @@
+use hyperlog_core::log::GraphItem;
 use ratatui::{
     prelude::*,
     widgets::{Block, Borders, Padding, Paragraph},
@@ -10,7 +11,10 @@ use crate::{
 
 use self::{
     command_bar::{CommandBar, CommandBarState},
-    dialog::{CreateItem, CreateItemState},
+    dialog::{
+        create_item::{CreateItem, CreateItemState},
+        edit_item::{EditItem, EditItemState},
+    },
 };
 
 mod command_bar;
@@ -18,12 +22,14 @@ pub mod dialog;
 
 pub enum Dialog {
     CreateItem { state: CreateItemState },
+    EditItem { state: EditItemState },
 }
 
 impl Dialog {
     pub fn get_command(&self) -> Option<hyperlog_core::commander::Command> {
         match self {
             Dialog::CreateItem { state } => state.get_command(),
+            Dialog::EditItem { state } => state.get_command(),
         }
     }
 }
@@ -76,12 +82,13 @@ impl<'a> App<'a> {
     pub fn update(&mut self, msg: Msg) -> anyhow::Result<impl IntoCommand> {
         tracing::trace!("handling msg: {:?}", msg);
 
-        match msg {
+        match &msg {
             Msg::MoveRight => self.graph_explorer.move_right()?,
             Msg::MoveLeft => self.graph_explorer.move_left()?,
             Msg::MoveDown => self.graph_explorer.move_down()?,
             Msg::MoveUp => self.graph_explorer.move_up()?,
             Msg::OpenCreateItemDialog => self.open_dialog(),
+            Msg::OpenEditItemDialog { item } => self.open_edit_item_dialog(item),
             Msg::EnterInsertMode => self.mode = Mode::Insert,
             Msg::EnterViewMode => self.mode = Mode::View,
             Msg::EnterCommandMode => {
@@ -95,7 +102,7 @@ impl<'a> App<'a> {
             Msg::SubmitCommand { command } => {
                 tracing::info!("submitting command");
 
-                if let Some(command) = CommandParser::parse(&command) {
+                if let Some(command) = CommandParser::parse(command) {
                     match self.focus {
                         AppFocus::Dialog => {
                             if command.is_write() {
@@ -113,7 +120,12 @@ impl<'a> App<'a> {
                                 self.dialog = None;
                             }
                         }
-                        AppFocus::Graph => self.graph_explorer.execute_command(&command)?,
+                        AppFocus::Graph => {
+                            if let Some(msg) = self.graph_explorer.execute_command(&command)? {
+                                self.command = None;
+                                return Ok(msg.into_command());
+                            }
+                        }
                     }
                 }
                 self.command = None;
@@ -128,6 +140,7 @@ impl<'a> App<'a> {
         } else if let Some(dialog) = &mut self.dialog {
             match dialog {
                 Dialog::CreateItem { state } => state.update(&msg)?,
+                Dialog::EditItem { state } => state.update(&msg)?,
             }
         }
 
@@ -143,6 +156,20 @@ impl<'a> App<'a> {
             self.dialog = Some(Dialog::CreateItem {
                 state: CreateItemState::new(root, path),
             });
+        }
+    }
+
+    fn open_edit_item_dialog(&mut self, item: &GraphItem) {
+        if self.dialog.is_none() {
+            let root = self.root.clone();
+            let path = self.graph_explorer.get_current_path();
+
+            self.dialog = Some(Dialog::EditItem {
+                state: EditItemState::new(root, path, item),
+            });
+            self.command = None;
+            self.focus = AppFocus::Dialog;
+            self.mode = Mode::Insert;
         }
     }
 }
@@ -176,6 +203,7 @@ pub fn render_app(frame: &mut Frame, state: &mut App) {
 
         match dialog {
             Dialog::CreateItem { .. } => heading_parts.push(Span::raw("create item")),
+            Dialog::EditItem { .. } => heading_parts.push(Span::raw("edit item")),
         }
     }
 
@@ -237,6 +265,9 @@ pub fn render_app(frame: &mut Frame, state: &mut App) {
         match dialog {
             Dialog::CreateItem { state } => {
                 frame.render_stateful_widget(&mut CreateItem::default(), chunks[1], state)
+            }
+            Dialog::EditItem { state } => {
+                frame.render_stateful_widget(&mut EditItem::default(), chunks[1], state)
             }
         }
 

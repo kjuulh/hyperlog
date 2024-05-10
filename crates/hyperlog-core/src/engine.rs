@@ -44,7 +44,7 @@ impl Engine {
             match current_item {
                 GraphItem::User(u) => match u.get_mut(section.to_owned()) {
                     Some(graph_item) => {
-                        current_item = graph_item.as_mut();
+                        current_item = graph_item;
                     }
                     None => anyhow::bail!("path: {} section was not found", section),
                 },
@@ -60,10 +60,10 @@ impl Engine {
 
         match current_item {
             GraphItem::User(u) => {
-                u.insert(last.to_string(), Box::new(item));
+                u.insert(last.to_string(), item);
             }
             GraphItem::Section(s) => {
-                s.insert(last.to_string(), Box::new(item));
+                s.insert(last.to_string(), item);
             }
             GraphItem::Item { .. } => anyhow::bail!("cannot insert an item into an item"),
         }
@@ -109,11 +109,11 @@ impl Engine {
 
         match dest {
             GraphItem::User(u) => {
-                u.try_insert(src_item.to_string(), Box::new(src))
+                u.try_insert(src_item.to_string(), src)
                     .map_err(|_e| anyhow!("key was already found, aborting: {}", src_item))?;
             }
             GraphItem::Section(s) => {
-                s.try_insert(src_item.to_string(), Box::new(src))
+                s.try_insert(src_item.to_string(), src)
                     .map_err(|_e| anyhow!("key was already found, aborting: {}", src_item))?;
             }
             GraphItem::Item { .. } => {
@@ -139,6 +139,57 @@ impl Engine {
                 },
                 _ => {
                     anyhow::bail!("{}.{:?} is not an item", root, path)
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn update_item(
+        &mut self,
+        root: &str,
+        path: &[&str],
+        item: &GraphItem,
+    ) -> anyhow::Result<()> {
+        if let Some((name, dest_last)) = path.split_last() {
+            if let Some(parent) = self.get_mut(root, dest_last) {
+                match parent {
+                    GraphItem::User(s) | GraphItem::Section(s) => {
+                        if let Some(mut existing) = s.remove(*name) {
+                            match (&mut existing, item) {
+                                (
+                                    GraphItem::Item {
+                                        title: ex_title,
+                                        description: ex_desc,
+                                        state: ex_state,
+                                    },
+                                    GraphItem::Item {
+                                        title,
+                                        description,
+                                        state,
+                                    },
+                                ) => {
+                                    ex_title.clone_from(title);
+                                    ex_desc.clone_from(description);
+                                    ex_state.clone_from(state);
+
+                                    let title = title.replace(".", "-");
+                                    s.insert(title, existing.clone());
+                                }
+                                _ => {
+                                    anyhow::bail!(
+                                        "path: {}.{} found is not an item",
+                                        root,
+                                        path.join(".")
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    GraphItem::Item { .. } => {
+                        anyhow::bail!("cannot rename when item is placed in an item")
+                    }
                 }
             }
         }

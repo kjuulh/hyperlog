@@ -13,13 +13,19 @@ pub enum ItemState {
     Done,
 }
 
+impl Default for ItemState {
+    fn default() -> Self {
+        Self::NotDone
+    }
+}
+
 #[derive(Deserialize, Serialize, PartialEq, Eq, Clone, Debug)]
 #[serde(tag = "type")]
 pub enum GraphItem {
     #[serde(rename = "user")]
-    User(BTreeMap<String, Box<GraphItem>>),
+    User(BTreeMap<String, GraphItem>),
     #[serde(rename = "section")]
-    Section(BTreeMap<String, Box<GraphItem>>),
+    Section(BTreeMap<String, GraphItem>),
     #[serde(rename = "item")]
     Item {
         title: String,
@@ -58,8 +64,7 @@ impl GraphItem {
             Some((first, rest)) => match self {
                 GraphItem::User(section) | GraphItem::Section(section) => {
                     if rest.is_empty() {
-                        let val = section.remove(*first);
-                        val.map(|v| *v)
+                        section.remove(*first)
                     } else {
                         section.get_mut(*first)?.take(rest)
                     }
@@ -131,7 +136,7 @@ mod test {
         let mut user = BTreeMap::new();
         user.insert(
             "some-project".into(),
-            Box::new(GraphItem::Section(BTreeMap::default())),
+            GraphItem::Section(BTreeMap::default()),
         );
 
         expected.insert("kjuulh".into(), GraphItem::User(user));
@@ -160,13 +165,10 @@ mod test {
         let mut some_project = BTreeMap::default();
         some_project.insert(
             "some-nested-project".into(),
-            Box::new(GraphItem::Section(BTreeMap::default())),
+            GraphItem::Section(BTreeMap::default()),
         );
         let mut user = BTreeMap::new();
-        user.insert(
-            "some-project".into(),
-            Box::new(GraphItem::Section(some_project)),
-        );
+        user.insert("some-project".into(), GraphItem::Section(some_project));
 
         expected.insert("kjuulh".into(), GraphItem::User(user));
 
@@ -200,23 +202,20 @@ mod test {
         let mut nested_project = BTreeMap::default();
         nested_project.insert(
             "some-todo".into(),
-            Box::new(GraphItem::Item {
+            GraphItem::Item {
                 title: "some title".into(),
                 description: "some description".into(),
                 state: ItemState::NotDone,
-            }),
+            },
         );
 
         let mut some_project = BTreeMap::default();
         some_project.insert(
             "some-nested-project".into(),
-            Box::new(GraphItem::Section(nested_project)),
+            GraphItem::Section(nested_project),
         );
         let mut user = BTreeMap::new();
-        user.insert(
-            "some-project".into(),
-            Box::new(GraphItem::Section(some_project)),
-        );
+        user.insert("some-project".into(), GraphItem::Section(some_project));
 
         expected.insert("kjuulh".into(), GraphItem::User(user));
 
