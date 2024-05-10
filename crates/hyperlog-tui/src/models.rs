@@ -8,6 +8,7 @@ pub enum Msg {
     MoveLeft,
     MoveDown,
     MoveUp,
+    QuitApp,
     OpenCreateItemDialog,
     OpenEditItemDialog { item: GraphItem },
     Interact,

@@ -5,8 +5,8 @@ use ratatui::{
 };
 
 use crate::{
-    command_parser::CommandParser, commands::IntoCommand, components::GraphExplorer,
-    state::SharedState, Msg,
+    command_parser::CommandParser, commands::IntoCommand,
+    components::graph_explorer::GraphExplorer, state::SharedState, Msg,
 };
 
 use self::{
@@ -124,6 +124,10 @@ impl<'a> App<'a> {
                             if let Some(msg) = self.graph_explorer.execute_command(&command)? {
                                 self.command = None;
                                 return Ok(msg.into_command());
+                            }
+
+                            if command.is_quit() {
+                                return Ok(Msg::QuitApp.into_command());
                             }
                         }
                     }

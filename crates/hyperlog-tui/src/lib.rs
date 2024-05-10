@@ -5,7 +5,7 @@ use std::{io::Stdout, time::Duration};
 use anyhow::{Context, Result};
 use app::{render_app, App};
 use commands::IntoCommand;
-use components::GraphExplorer;
+use components::graph_explorer::GraphExplorer;
 use crossterm::event::{self, Event, KeyCode};
 use hyperlog_core::state::State;
 use models::{EditMsg, Msg};
@@ -77,7 +77,6 @@ fn update(
             let mut cmd = match &app.mode {
                 app::Mode::View => match key.code {
                     KeyCode::Enter => app.update(Msg::Interact)?,
-                    KeyCode::Char('q') => return Ok(UpdateConclusion::new(true)),
                     KeyCode::Char('l') => app.update(Msg::MoveRight)?,
                     KeyCode::Char('h') => app.update(Msg::MoveLeft)?,
                     KeyCode::Char('j') => app.update(Msg::MoveDown)?,
@@ -109,6 +108,10 @@ fn update(
                 let msg = cmd.into_command().execute();
                 match msg {
                     Some(msg) => {
+                        if let Msg::QuitApp = msg {
+                            return Ok(UpdateConclusion(true));
+                        }
+
                         cmd = app.update(msg)?;
                     }
                     None => break,
