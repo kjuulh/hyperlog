@@ -7,6 +7,9 @@ pub enum Commands {
     Archive,
     CreateSection { name: String },
     Edit,
+
+    ShowAll,
+    HideDone,
 }
 
 impl Commands {
@@ -37,6 +40,8 @@ impl CommandParser {
                     name: name.to_string(),
                 }),
                 "e" | "edit" => Some(Commands::Edit),
+                "show-all" => Some(Commands::ShowAll),
+                "hide-done" => Some(Commands::HideDone),
                 _ => None,
             },
             None => None,

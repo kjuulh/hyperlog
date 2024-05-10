@@ -12,7 +12,7 @@ use super::{
     render_graph::summarize::SummarizeRenderGraph,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum FilterBy {
     NotDone,
     None,
@@ -24,7 +24,7 @@ impl Default for FilterBy {
     }
 }
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct DisplayOptions {
     pub filter_by: FilterBy,
 }
@@ -84,7 +84,11 @@ impl<'a> GraphExplorer<'a> {
     }
 
     fn linearize_graph(&self) -> Option<MovementGraph> {
-        self.inner.graph.clone().map(|g| g.into())
+        tracing::trace!("current display options: {:?}", self.inner.display_options);
+        self.inner
+            .graph
+            .clone()
+            .map(|g| MovementGraph::new(g, &self.inner.display_options))
     }
 
     /// Will only incrmeent to the next level
@@ -223,6 +227,12 @@ impl<'a> GraphExplorer<'a> {
                     }
                 }
             }
+            Commands::ShowAll => {
+                self.inner.display_options.filter_by = FilterBy::None;
+            }
+            Commands::HideDone => {
+                self.inner.display_options.filter_by = FilterBy::NotDone;
+            }
             _ => (),
         }
 
@@ -257,7 +267,8 @@ impl<'a> StatefulWidget for GraphExplorer<'a> {
         let _height = height as usize;
 
         if let Some(graph) = &state.graph {
-            let movement_graph: MovementGraph = graph.clone().into();
+            let movement_graph: MovementGraph =
+                MovementGraph::new(graph.clone(), &state.display_options);
             let lines = movement_graph.render_graph(&state.current_position);
             let para = Paragraph::new(lines);
             para.render(area, buf);
