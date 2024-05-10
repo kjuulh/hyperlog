@@ -63,4 +63,8 @@ impl SharedEngine {
 
         Ok(())
     }
+
+    pub(crate) fn get_roots(&self) -> Option<Vec<String>> {
+        self.inner.read().unwrap().get_roots()
+    }
 }

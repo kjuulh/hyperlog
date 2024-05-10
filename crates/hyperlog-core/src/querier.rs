@@ -9,6 +9,10 @@ impl Querier {
         Self { engine }
     }
 
+    pub fn get_available_roots(&self) -> Option<Vec<String>> {
+        self.engine.get_roots()
+    }
+
     pub fn get(
         &self,
         root: &str,

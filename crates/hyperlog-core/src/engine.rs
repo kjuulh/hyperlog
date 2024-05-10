@@ -196,6 +196,15 @@ impl Engine {
 
         Ok(())
     }
+
+    pub fn get_roots(&self) -> Option<Vec<String>> {
+        let items = self.graph.keys().cloned().collect::<Vec<_>>();
+        if items.is_empty() {
+            None
+        } else {
+            Some(items)
+        }
+    }
 }
 
 impl Display for Engine {

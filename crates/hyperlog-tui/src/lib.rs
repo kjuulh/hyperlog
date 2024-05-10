@@ -39,7 +39,14 @@ pub async fn execute(state: State) -> Result<()> {
 }
 
 fn run(terminal: &mut Terminal<CrosstermBackend<Stdout>>, state: SharedState) -> Result<()> {
-    let root = "kjuulh".to_string();
+    let root = match state.querier.get_available_roots() {
+        // TODO: maybe present choose root screen
+        Some(roots) => roots.first().cloned().unwrap(),
+        None => {
+            // TODO: present create root screen
+            anyhow::bail!("no valid root available\nPlease run:\n\n$ hyperlog create-root --name <your-username>");
+        }
+    };
 
     let mut graph_explorer = GraphExplorer::new(root.clone(), state.clone());
     graph_explorer.update_graph()?;

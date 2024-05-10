@@ -28,6 +28,11 @@ enum Commands {
     },
     Info {},
 
+    CreateRoot {
+        #[arg(long)]
+        name: String,
+    },
+
     ClearLock {},
 }
 
@@ -103,6 +108,12 @@ pub async fn execute() -> anyhow::Result<()> {
                 println!("{}", output);
             }
         },
+        Some(Commands::CreateRoot { name }) => {
+            state
+                .commander
+                .execute(commander::Command::CreateRoot { root: name })?;
+            println!("Root was successfully created, now run:\n\n$ hyperlog");
+        }
         Some(Commands::Info {}) => {
             println!("graph stored at: {}", state.storage.info()?)
         }
