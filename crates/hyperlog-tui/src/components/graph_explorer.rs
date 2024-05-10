@@ -12,6 +12,23 @@ use super::{
     render_graph::summarize::SummarizeRenderGraph,
 };
 
+#[derive(Clone)]
+pub enum FilterBy {
+    NotDone,
+    None,
+}
+
+impl Default for FilterBy {
+    fn default() -> Self {
+        Self::NotDone
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct DisplayOptions {
+    pub filter_by: FilterBy,
+}
+
 pub struct GraphExplorer<'a> {
     state: SharedState,
 
@@ -23,6 +40,8 @@ pub struct GraphExplorerState<'a> {
 
     current_path: Option<&'a str>,
     current_position: Vec<usize>,
+
+    display_options: DisplayOptions,
 
     graph: Option<GraphItem>,
 }
@@ -36,6 +55,7 @@ impl<'a> GraphExplorer<'a> {
                 current_path: None,
                 current_position: Vec::new(),
                 graph: None,
+                display_options: DisplayOptions::default(),
             },
         }
     }

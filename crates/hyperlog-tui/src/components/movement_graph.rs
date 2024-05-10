@@ -1,7 +1,7 @@
-use std::ops::Deref;
-
 use hyperlog_core::log::{GraphItem, ItemState};
 use itertools::Itertools;
+
+use super::graph_explorer::{DisplayOptions, FilterBy};
 
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub enum GraphItemType {
@@ -109,28 +109,31 @@ impl MovementGraph {
             None => Vec::new(),
         }
     }
-}
 
-impl From<Box<GraphItem>> for MovementGraph {
-    fn from(value: Box<GraphItem>) -> Self {
-        value.deref().clone().into()
-    }
-}
-
-impl From<GraphItem> for MovementGraph {
-    fn from(value: GraphItem) -> Self {
+    pub fn new(graph_item: GraphItem, display_options: &DisplayOptions) -> MovementGraph {
         let mut graph = MovementGraph::default();
 
-        match value {
+        match graph_item {
             GraphItem::User(sections) | GraphItem::Section(sections) => {
                 let graph_items = sections
                     .iter()
                     .sorted_by(|(a, _), (b, _)| Ord::cmp(a, b))
+                    .filter(|(_, item)| {
+                        if let GraphItem::Item { state, .. } = item {
+                            if matches!(display_options.filter_by, FilterBy::NotDone)
+                                && matches!(state, ItemState::Done)
+                            {
+                                return false;
+                            }
+                        }
+
+                        true
+                    })
                     .enumerate()
                     .map(|(i, (key, value))| MovementGraphItem {
                         index: i,
                         name: key.clone(),
-                        values: value.clone().into(),
+                        values: Self::new(value.clone(), display_options),
                         item_type: match value {
                             GraphItem::User(_) => GraphItemType::Section,
                             GraphItem::Section(_) => GraphItemType::Section,
@@ -147,6 +150,12 @@ impl From<GraphItem> for MovementGraph {
         }
 
         graph
+    }
+}
+
+impl From<GraphItem> for MovementGraph {
+    fn from(value: GraphItem) -> Self {
+        MovementGraph::new(value, &DisplayOptions::default())
     }
 }
 
