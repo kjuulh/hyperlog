@@ -6,16 +6,12 @@ vars:
   service: "hyperlog"
   registry: kasperhermansen
 
-  clusters:
-    clank-prod:
-      replicas: "3"
-      namespace: prod
-
-
-deployment:
-  registry: git@git.front.kjuulh.io:kjuulh/clank-clusters
-  env:
-    prod:
-      clusters:
-        - clank-prod
-
+please:
+  project:
+    owner: kjuulh
+    repository: hyperlog
+    branch: main
+  settings:
+    api_url: https://git.front.kjuulh.io
+  actions:
+    rust:
