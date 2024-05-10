@@ -1,10 +1,13 @@
 use ratatui::prelude::*;
 
-use crate::components::movement_graph::{GraphItemType, MovementGraph};
+use crate::components::movement_graph::{GraphItemType, MovementGraph, MovementGraphItem};
 
-use super::RenderGraph;
+pub trait ClassicRenderGraph {
+    fn render_graph(&self, items: &[usize]) -> Vec<ratatui::prelude::Line>;
+    fn render_graph_spans(&self, items: &[usize]) -> Vec<Vec<ratatui::prelude::Span>>;
+}
 
-impl RenderGraph for MovementGraph {
+impl ClassicRenderGraph for MovementGraph {
     /// render_graph takes each level of items, renders them, and finally renders a strongly set selector for the current item the user is on
     /// This is done from buttom up, and composed via. string padding
     fn render_graph(&self, items: &[usize]) -> Vec<Line> {

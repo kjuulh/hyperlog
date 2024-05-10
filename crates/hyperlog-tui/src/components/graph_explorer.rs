@@ -7,8 +7,10 @@ use crate::{
     state::SharedState,
 };
 
-use super::movement_graph::{MovementGraph, MovementGraphItem};
-use super::render_graph::RenderGraph;
+use super::{
+    movement_graph::{MovementGraph, MovementGraphItem},
+    render_graph::summarize::SummarizeRenderGraph,
+};
 
 pub struct GraphExplorer<'a> {
     state: SharedState,
