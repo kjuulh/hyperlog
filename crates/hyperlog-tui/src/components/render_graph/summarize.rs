@@ -23,7 +23,7 @@ impl Summarize for MovementGraphItem {
                 ]
             }
             GraphItemType::Item { done } => {
-                vec![Span::from(if done { "- [x] " } else { "- [ ] " }), name]
+                vec![Span::from(if done { "[x] " } else { "[ ] " }), name]
             }
         }
     }
@@ -88,73 +88,52 @@ impl SummarizeRenderGraph for MovementGraph {
         depth: usize,
     ) -> Vec<Vec<ratatui::prelude::Span>> {
         match items.split_first() {
-            Some((first, rest)) => match rest.is_empty() {
-                true => match self.items.get(*first) {
-                    Some(item) => {
-                        let mut output = Vec::new();
+            Some((first, rest)) => match self.items.get(*first) {
+                Some(item) => {
+                    let mut output = Vec::new();
 
-                        if *first > 0 {
-                            if let Some(sibling) = self.items.get(*first - 1) {
-                                output.append(&mut sibling.brief())
+                    if rest.is_empty() {
+                        for item in 0..*first {
+                            if let Some(sibling) = self.items.get(item) {
+                                output.append(&mut sibling.brief());
                             }
                         }
 
                         output.append(&mut item.full(true));
 
-                        if *first < self.items.len() {
-                            if let Some(sibling) = self.items.get(*first + 1) {
-                                output.append(&mut sibling.brief())
+                        for item in *first + 1..self.items.len() {
+                            if let Some(sibling) = self.items.get(item) {
+                                output.append(&mut sibling.brief());
                             }
                         }
-
-                        output
-                    }
-                    None => vec![],
-                },
-                false => {
-                    if rest.len() > 1 {
-                        let mut output = Vec::new();
-                        // TODO: add heading for the current item, and shift lines by one
-                        if let Some(item) = self.items.get(*first) {
-                            output.push(item.heading())
-                        }
-                        for mut line in self.render_graph_spans(rest, 0) {
-                            line.insert(0, Span::from("~".repeat(4)));
-
-                            output.push(line);
-                        }
-
-                        output
                     } else {
-                        match self.items.get(*first) {
-                            Some(item) => match item.values.items.get(*rest.first().unwrap()) {
-                                Some(actual_item) => {
-                                    let mut output = Vec::new();
+                        let heading = item.heading();
+                        output.push(heading);
 
-                                    if *first > 0 {
-                                        if let Some(sibling) = self.items.get(*first - 1) {
-                                            output.append(&mut sibling.brief())
-                                        }
-                                    }
-
-                                    output.append(&mut actual_item.full(true));
-
-                                    if *first < self.items.len() {
-                                        if let Some(sibling) = self.items.get(*first + 1) {
-                                            output.append(&mut sibling.brief())
-                                        }
-                                    }
-
-                                    output
-                                }
-                                None => vec![],
-                            },
-                            None => vec![],
+                        let mut next_level = item.values.render_graph_spans(rest, 0);
+                        for item in next_level.iter_mut() {
+                            item.insert(0, Span::raw(" ".repeat(4)));
                         }
+                        output.append(&mut next_level);
                     }
+
+                    output
+                }
+                None => {
+                    let mut output = Vec::new();
+                    for item in &self.items {
+                        output.append(&mut item.brief());
+                    }
+                    output
                 }
             },
-            None => self.items.iter().flat_map(|i| i.brief()).collect_vec(),
+            None => {
+                let mut output = Vec::new();
+                for item in &self.items {
+                    output.append(&mut item.brief());
+                }
+                output
+            }
         }
     }
 }
