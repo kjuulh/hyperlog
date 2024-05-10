@@ -2,8 +2,8 @@ use crate::components::movement_graph::{GraphItemType, MovementGraph, MovementGr
 use itertools::Itertools;
 use ratatui::prelude::*;
 
-const green: Color = Color::Rgb(127, 255, 0);
-const orange: Color = Color::Rgb(255, 165, 0);
+const GREEN: Color = Color::Rgb(127, 255, 0);
+const ORANGE: Color = Color::Rgb(255, 165, 0);
 
 pub trait Summarize {
     fn heading(&self) -> Vec<Span>;
@@ -29,7 +29,7 @@ impl Summarize for MovementGraphItem {
                 if done {
                     vec![
                         Span::from("["),
-                        Span::from("x").fg(green),
+                        Span::from("x").fg(GREEN),
                         Span::from("] "),
                         name,
                     ]
@@ -46,7 +46,7 @@ impl Summarize for MovementGraphItem {
 
         let items = &self.values.items;
 
-        let mut items = if items.len() > 2 {
+        let items = if items.len() > 2 {
             vec![
                 items.first().unwrap().heading(),
                 vec![Span::from("...").fg(Color::DarkGray)],
@@ -71,7 +71,7 @@ impl Summarize for MovementGraphItem {
             .into_iter()
             .map(|h| {
                 if selected {
-                    h.patch_style(Style::new().fg(orange))
+                    h.patch_style(Style::new().fg(ORANGE))
                 } else {
                     h
                 }
@@ -98,20 +98,15 @@ impl Summarize for MovementGraphItem {
 }
 pub trait SummarizeRenderGraph {
     fn render_graph(&self, items: &[usize]) -> Vec<ratatui::prelude::Line>;
-    fn render_graph_spans(&self, items: &[usize], depth: usize)
-        -> Vec<Vec<ratatui::prelude::Span>>;
+    fn render_graph_spans(&self, items: &[usize]) -> Vec<Vec<ratatui::prelude::Span>>;
 }
 
 impl SummarizeRenderGraph for MovementGraph {
     fn render_graph(&self, items: &[usize]) -> Vec<ratatui::prelude::Line> {
-        self.render_graph_spans(items, 0).to_lines()
+        self.render_graph_spans(items).to_lines()
     }
 
-    fn render_graph_spans(
-        &self,
-        items: &[usize],
-        depth: usize,
-    ) -> Vec<Vec<ratatui::prelude::Span>> {
+    fn render_graph_spans(&self, items: &[usize]) -> Vec<Vec<ratatui::prelude::Span>> {
         match items.split_first() {
             Some((first, rest)) => match self.items.get(*first) {
                 Some(item) => {
@@ -135,7 +130,7 @@ impl SummarizeRenderGraph for MovementGraph {
                         let heading = item.heading();
                         output.push(heading);
 
-                        let mut next_level = item.values.render_graph_spans(rest, 0);
+                        let mut next_level = item.values.render_graph_spans(rest);
                         for item in next_level.iter_mut() {
                             item.insert(0, Span::raw(" ".repeat(4)));
                         }

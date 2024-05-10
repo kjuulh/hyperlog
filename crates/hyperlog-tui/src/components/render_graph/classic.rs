@@ -1,7 +1,8 @@
 use ratatui::prelude::*;
 
-use crate::components::movement_graph::{GraphItemType, MovementGraph, MovementGraphItem};
+use crate::components::movement_graph::{GraphItemType, MovementGraph};
 
+#[allow(dead_code)]
 pub trait ClassicRenderGraph {
     fn render_graph(&self, items: &[usize]) -> Vec<ratatui::prelude::Line>;
     fn render_graph_spans(&self, items: &[usize]) -> Vec<Vec<ratatui::prelude::Span>>;
