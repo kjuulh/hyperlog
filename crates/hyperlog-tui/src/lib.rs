@@ -1,3 +1,4 @@
+#![feature(map_try_insert)]
 #![feature(fn_traits)]
 
 use std::{io::Stdout, time::Duration};
@@ -6,8 +7,8 @@ use anyhow::{Context, Result};
 use app::{render_app, App};
 use commands::IntoCommand;
 use components::graph_explorer::GraphExplorer;
+use core_state::State;
 use crossterm::event::{self, Event, KeyCode};
-use hyperlog_core::state::State;
 use models::{EditMsg, Msg};
 use ratatui::{backend::CrosstermBackend, Terminal};
 
@@ -19,7 +20,16 @@ pub(crate) mod app;
 pub(crate) mod command_parser;
 pub(crate) mod commands;
 pub(crate) mod components;
-pub(crate) mod state;
+
+pub mod commander;
+pub mod core_state;
+pub mod shared_engine;
+pub mod state;
+
+mod engine;
+mod events;
+mod querier;
+mod storage;
 
 mod logging;
 mod terminal;

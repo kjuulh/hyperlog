@@ -1,8 +1,7 @@
 use std::{collections::BTreeMap, fmt::Display};
 
 use anyhow::{anyhow, Context};
-
-use crate::log::{Graph, GraphItem, ItemState};
+use hyperlog_core::log::{Graph, GraphItem, ItemState};
 
 #[derive(Default)]
 pub struct Engine {
@@ -218,9 +217,8 @@ impl Display for Engine {
 mod test {
     use std::collections::BTreeMap;
 
+    use hyperlog_core::log::{GraphItem, ItemState};
     use similar_asserts::assert_eq;
-
-    use crate::log::{GraphItem, ItemState};
 
     use super::Engine;
 
@@ -249,7 +247,7 @@ mod test {
             .create(
                 "kjuulh",
                 &["some-section"],
-                crate::log::GraphItem::Section(BTreeMap::default()),
+                GraphItem::Section(BTreeMap::default()),
             )
             .unwrap();
 
@@ -275,7 +273,7 @@ mod test {
             .create(
                 "kjuulh",
                 &["some-section"],
-                crate::log::GraphItem::Section(BTreeMap::default()),
+                GraphItem::Section(BTreeMap::default()),
             )
             .unwrap();
 
@@ -283,7 +281,7 @@ mod test {
             .create(
                 "kjuulh",
                 &["some-section", "some-sub-section"],
-                crate::log::GraphItem::Section(BTreeMap::default()),
+                GraphItem::Section(BTreeMap::default()),
             )
             .unwrap();
 

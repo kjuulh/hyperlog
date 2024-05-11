@@ -5,7 +5,7 @@ use ratatui::{
 };
 
 use crate::{
-    command_parser::CommandParser, commands::IntoCommand,
+    command_parser::CommandParser, commander, commands::IntoCommand,
     components::graph_explorer::GraphExplorer, state::SharedState, Msg,
 };
 
@@ -26,7 +26,7 @@ pub enum Dialog {
 }
 
 impl Dialog {
-    pub fn get_command(&self) -> Option<hyperlog_core::commander::Command> {
+    pub fn get_command(&self) -> Option<commander::Command> {
         match self {
             Dialog::CreateItem { state } => state.get_command(),
             Dialog::EditItem { state } => state.get_command(),

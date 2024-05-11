@@ -1,4 +1,6 @@
-use crate::{log::GraphItem, shared_engine::SharedEngine};
+use hyperlog_core::log::GraphItem;
+
+use crate::shared_engine::SharedEngine;
 
 pub struct Querier {
     engine: SharedEngine,

@@ -11,6 +11,7 @@ anyhow.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
+serde.workspace = true
 serde_json.workspace = true
 itertools.workspace = true
 
@@ -19,6 +20,9 @@ crossterm = { version = "0.27.0", features = ["event-stream"] }
 directories = "5.0.1"
 human-panic = "2.0.0"
 ropey = "1.6.1"
+bus = "2.4.1"
+dirs = "5.0.1"
 
 [dev-dependencies]
 similar-asserts = "1.5.0"
+tempfile = "3.10.1"

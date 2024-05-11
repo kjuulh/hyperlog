@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 use clap::{Parser, Subcommand};
-use hyperlog_core::{commander, state};
+use hyperlog_tui::{commander, core_state::State, state};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -90,7 +90,7 @@ pub async fn execute() -> anyhow::Result<()> {
             .await?;
         }
         Some(Commands::Exec { commands }) => {
-            let state = state::State::new()?;
+            let state = State::new()?;
             match commands {
                 ExecCommands::CreateRoot { root } => state
                     .commander
@@ -109,7 +109,7 @@ pub async fn execute() -> anyhow::Result<()> {
             }
         }
         Some(Commands::Query { commands }) => {
-            let state = state::State::new()?;
+            let state = State::new()?;
             match commands {
                 QueryCommands::Get { root, path } => {
                     let res = state.querier.get(
@@ -126,23 +126,23 @@ pub async fn execute() -> anyhow::Result<()> {
             }
         }
         Some(Commands::CreateRoot { name }) => {
-            let state = state::State::new()?;
+            let state = State::new()?;
             state
                 .commander
                 .execute(commander::Command::CreateRoot { root: name })?;
             println!("Root was successfully created, now run:\n\n$ hyperlog");
         }
         Some(Commands::Info {}) => {
-            let state = state::State::new()?;
+            let state = State::new()?;
             println!("graph stored at: {}", state.storage.info()?)
         }
         Some(Commands::ClearLock {}) => {
-            let state = state::State::new()?;
+            let state = State::new()?;
             state.storage.clear_lock_file();
             println!("cleared lock file");
         }
         None => {
-            let state = state::State::new()?;
+            let state = State::new()?;
             hyperlog_tui::execute(state).await?;
         }
     }

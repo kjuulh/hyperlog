@@ -149,9 +149,8 @@ impl Storage {
 mod test {
     use std::collections::BTreeMap;
 
+    use hyperlog_core::log::GraphItem;
     use similar_asserts::assert_eq;
-
-    use crate::log::GraphItem;
 
     use super::*;
 

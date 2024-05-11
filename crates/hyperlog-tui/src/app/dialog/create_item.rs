@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use ratatui::{prelude::*, widgets::*};
 
-use crate::models::Msg;
+use crate::{commander, models::Msg};
 
 use super::{InputBuffer, InputField};
 
@@ -61,7 +61,7 @@ impl CreateItemState {
         Ok(())
     }
 
-    pub fn get_command(&self) -> Option<hyperlog_core::commander::Command> {
+    pub fn get_command(&self) -> Option<commander::Command> {
         let title = self.title.string();
         let description = self.description.string();
 
@@ -69,7 +69,7 @@ impl CreateItemState {
             let mut path = self.path.clone();
             path.push(title.replace([' ', '.'], "-"));
 
-            Some(hyperlog_core::commander::Command::CreateItem {
+            Some(commander::Command::CreateItem {
                 root: self.root.clone(),
                 path,
                 title: title.trim().into(),

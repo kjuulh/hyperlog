@@ -12,4 +12,4 @@ tear_down() {
 
 trap tear_down SIGINT
 
-RUST_LOG=info,hyperlog=trace cargo run -F include_server -- serve
+RUST_LOG=info,hyperlog=trace cargo watch -x 'run -F include_server -- serve'

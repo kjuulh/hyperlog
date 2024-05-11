@@ -1,6 +1,6 @@
 use std::{ops::Deref, sync::Arc};
 
-use hyperlog_core::state::State;
+use crate::core_state::State;
 
 #[derive(Clone)]
 pub struct SharedState {

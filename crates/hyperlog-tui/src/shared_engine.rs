@@ -1,6 +1,8 @@
 use std::sync::{Arc, RwLock};
 
-use crate::{engine::Engine, log::GraphItem};
+use hyperlog_core::log::GraphItem;
+
+use crate::engine::Engine;
 
 #[derive(Clone)]
 pub struct SharedEngine {

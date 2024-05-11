@@ -3,7 +3,7 @@ use hyperlog_core::log::GraphItem;
 use ratatui::{prelude::*, widgets::*};
 
 use crate::{
-    command_parser::Commands, components::movement_graph::GraphItemType, models::Msg,
+    command_parser::Commands, commander, components::movement_graph::GraphItemType, models::Msg,
     state::SharedState,
 };
 
@@ -196,12 +196,12 @@ impl<'a> GraphExplorer<'a> {
                     let mut path = self.get_current_path();
                     path.push(name.replace(" ", "-").replace(".", "-"));
 
-                    self.state.commander.execute(
-                        hyperlog_core::commander::Command::CreateSection {
+                    self.state
+                        .commander
+                        .execute(commander::Command::CreateSection {
                             root: self.inner.root.clone(),
                             path,
-                        },
-                    )?;
+                        })?;
                 }
             }
             Commands::Edit => {
@@ -247,7 +247,7 @@ impl<'a> GraphExplorer<'a> {
 
             self.state
                 .commander
-                .execute(hyperlog_core::commander::Command::ToggleItem {
+                .execute(commander::Command::ToggleItem {
                     root: self.inner.root.to_string(),
                     path: self.get_current_path(),
                 })?;
