@@ -1,0 +1,12 @@
+[package]
+name = "hyperlog-protos"
+edition = "2021"
+version.workspace = true
+
+[dependencies]
+tonic.workspace = true
+
+prost = "0.12.4"
+
+[build-dependencies]
+tonic-build = "0.11.0"

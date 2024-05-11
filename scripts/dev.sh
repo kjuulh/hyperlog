@@ -3,10 +3,13 @@
 echo "starting services"
 docker compose -f templates/docker-compose.yaml up -d --remove-orphans
 
+sleep 5
+
 tear_down() {
-  docker compose -f templates/docker-compose.yaml down -v || true
+  echo "cleaning up services in the background"
+  (docker compose -f templates/docker-compose.yaml down -v &) > /dev/null 2>&1
 }
 
-trap  tear_down EXIT
+trap tear_down SIGINT
 
-RUST_LOG=trace,tokio=info,tower=info,mio=info,sqlx=info cargo run -F include_server -- serve
+RUST_LOG=info,hyperlog=trace cargo run -F include_server -- serve

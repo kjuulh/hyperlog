@@ -78,13 +78,14 @@ pub async fn execute() -> anyhow::Result<()> {
         Some(Commands::Serve {
             external_host,
             internal_host,
-            ..
+            external_grpc_host,
         }) => {
             tracing::info!("Starting service");
 
             hyperlog_server::serve(hyperlog_server::ServeOptions {
                 external_http: external_host,
                 internal_http: internal_host,
+                external_grpc: external_grpc_host,
             })
             .await?;
         }

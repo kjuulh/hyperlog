@@ -6,6 +6,7 @@ resolver = "2"
 hyperlog-core = { path = "crates/hyperlog-core" }
 hyperlog-tui = { path = "crates/hyperlog-tui" }
 hyperlog-server = { path = "crates/hyperlog-server" }
+hyperlog-protos = { path = "crates/hyperlog-protos" }
 
 anyhow = { version = "1" }
 tokio = { version = "1", features = ["full"] }
@@ -18,6 +19,7 @@ serde = { version = "1.0.201", features = ["derive"] }
 serde_json = "1.0.117"
 itertools = "0.12.1"
 uuid = { version = "1.8.0", features = ["v4"] }
+tonic = "0.11.0"
 
 [workspace.package]
 version = "0.1.0"
