@@ -943,14 +943,13 @@ dependencies = [
  "dirs",
  "dotenv",
  "hyperlog-core",
+ "hyperlog-server",
  "hyperlog-tui",
  "serde",
  "serde_json",
  "similar-asserts",
- "sqlx",
  "tempfile",
  "tokio",
- "tower-http",
  "tracing",
  "tracing-subscriber",
  "uuid",
@@ -975,6 +974,24 @@ dependencies = [
  "tower-http",
  "tracing",
  "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
+name = "hyperlog-server"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "hyperlog-core",
+ "serde",
+ "serde_json",
+ "similar-asserts",
+ "sqlx",
+ "tempfile",
+ "tokio",
+ "tower-http",
+ "tracing",
  "uuid",
 ]
 

@@ -7,6 +7,7 @@ repository = "https://git.front.kjuulh.io/kjuulh/hyperlog"
 [dependencies]
 hyperlog-core.workspace = true
 hyperlog-tui.workspace = true
+hyperlog-server = { workspace = true, optional = true }
 
 anyhow.workspace = true
 tokio.workspace = true
@@ -15,21 +16,17 @@ tracing-subscriber.workspace = true
 clap.workspace = true
 dotenv.workspace = true
 axum.workspace = true
+serde.workspace = true
 serde_json.workspace = true
+uuid.workspace = true
 
-serde = { version = "1.0.201", features = ["derive"] }
-sqlx = { version = "0.7.4", features = [
-  "runtime-tokio",
-  "tls-rustls",
-  "postgres",
-  "uuid",
-  "time",
-] }
-uuid = { version = "1.8.0", features = ["v4"] }
-tower-http = { version = "0.5.2", features = ["cors", "trace"] }
 bus = "2.4.1"
 dirs = "5.0.1"
 
 [dev-dependencies]
 similar-asserts = "1.5.0"
 tempfile = "3.10.1"
+
+[features]
+default = []
+include_server = ["dep:hyperlog-server"]

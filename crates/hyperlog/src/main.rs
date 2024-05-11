@@ -1,6 +1,4 @@
 mod cli;
-pub(crate) mod server;
-pub(crate) mod state;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

@@ -1,0 +1,28 @@
+[package]
+name = "hyperlog-server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+hyperlog-core.workspace = true
+
+anyhow.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+axum.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+
+tower-http = { version = "0.5.2", features = ["cors", "trace"] }
+sqlx = { version = "0.7.4", features = [
+  "runtime-tokio",
+  "tls-rustls",
+  "postgres",
+  "uuid",
+  "time",
+] }
+
+[dev-dependencies]
+similar-asserts = "1.5.0"
+tempfile = "3.10.1"

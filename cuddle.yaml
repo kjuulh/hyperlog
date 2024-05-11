@@ -15,3 +15,7 @@ please:
     api_url: https://git.front.kjuulh.io
   actions:
     rust:
+
+scripts:
+  dev:
+    type: shell
