@@ -15,3 +15,6 @@ dotenv = { version = "0.15" }
 axum = { version = "0.7" }
 serde_json = "1.0.117"
 itertools = "0.12.1"
+
+[workspace.package]
+version = "0.1.0"
