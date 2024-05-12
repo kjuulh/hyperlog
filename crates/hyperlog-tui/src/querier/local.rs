@@ -2,6 +2,7 @@ use hyperlog_core::log::GraphItem;
 
 use crate::shared_engine::SharedEngine;
 
+#[derive(Clone)]
 pub struct Querier {
     engine: SharedEngine,
 }

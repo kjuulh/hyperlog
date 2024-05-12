@@ -20,6 +20,15 @@ pub enum Msg {
     SubmitCommand { command: String },
 
     Edit(EditMsg),
+
+    GraphUpdated(GraphUpdatedEvent),
+}
+
+#[derive(Debug)]
+pub enum GraphUpdatedEvent {
+    Initiated,
+    Success(GraphItem),
+    Failure(String),
 }
 
 impl IntoCommand for Msg {

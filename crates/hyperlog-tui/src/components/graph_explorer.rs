@@ -1,13 +1,14 @@
 use anyhow::Result;
 use hyperlog_core::log::GraphItem;
+use itertools::Itertools;
 use ratatui::{prelude::*, widgets::*};
 
 use crate::{
     command_parser::Commands,
     commander,
-    commands::{Command, IntoCommand},
+    commands::{update_graph::UpdateGraphCommandExt, Command, IntoCommand},
     components::movement_graph::GraphItemType,
-    models::Msg,
+    models::{GraphUpdatedEvent, Msg},
     state::SharedState,
 };
 
@@ -50,6 +51,27 @@ pub struct GraphExplorerState<'a> {
     graph: Option<GraphItem>,
 }
 
+impl<'a> GraphExplorerState<'a> {
+    pub fn update(&mut self, msg: &Msg) -> Option<Command> {
+        if let Msg::GraphUpdated(graph_update) = msg {
+            match graph_update {
+                GraphUpdatedEvent::Initiated => {
+                    tracing::trace!("initialized graph");
+                }
+                GraphUpdatedEvent::Success(graph) => {
+                    tracing::trace!("graph updated successfully");
+                    self.graph = Some(graph.clone());
+                }
+                GraphUpdatedEvent::Failure(e) => {
+                    tracing::error!("graph update failed: {}", e);
+                }
+            }
+        }
+
+        None
+    }
+}
+
 impl<'a> GraphExplorer<'a> {
     pub fn new(root: String, state: SharedState) -> Self {
         Self {
@@ -64,19 +86,31 @@ impl<'a> GraphExplorer<'a> {
         }
     }
 
-    pub fn update_graph(&mut self) -> Result<&mut Self> {
+    pub fn new_update_graph(&self) -> Command {
+        self.state.update_graph_command().command(
+            &self.inner.root,
+            &self
+                .inner
+                .current_path
+                .map(|p| p.split(".").collect_vec())
+                .unwrap_or_default(),
+        )
+    }
+
+    pub async fn update_graph(&mut self) -> Result<&mut Self> {
         let now = std::time::SystemTime::now();
 
         let graph = self
             .state
             .querier
-            .get(
+            .get_async(
                 &self.inner.root,
                 self.inner
                     .current_path
                     .map(|p| p.split('.').collect::<Vec<_>>())
                     .unwrap_or_default(),
             )
+            .await
             .ok_or(anyhow::anyhow!("graph should've had an item"))?;
 
         self.inner.graph = Some(graph);
@@ -254,12 +288,12 @@ impl<'a> GraphExplorer<'a> {
             _ => (),
         }
 
-        self.update_graph()?;
+        //self.update_graph()?;
 
-        Ok(None)
+        Ok(Some(self.new_update_graph()))
     }
 
-    pub(crate) fn interact(&mut self) -> anyhow::Result<()> {
+    pub(crate) fn interact(&mut self) -> anyhow::Result<Command> {
         if !self.get_current_path().is_empty() {
             tracing::info!("toggling state of items");
 
@@ -271,9 +305,9 @@ impl<'a> GraphExplorer<'a> {
                 })?;
         }
 
-        self.update_graph()?;
+        //self.update_graph()?;
 
-        Ok(())
+        Ok(self.new_update_graph())
     }
 }
 

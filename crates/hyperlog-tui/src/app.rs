@@ -5,8 +5,12 @@ use ratatui::{
 };
 
 use crate::{
-    command_parser::CommandParser, commander, commands::IntoCommand,
-    components::graph_explorer::GraphExplorer, state::SharedState, Msg,
+    command_parser::CommandParser,
+    commander,
+    commands::{batch::BatchCommand, IntoCommand},
+    components::graph_explorer::GraphExplorer,
+    state::SharedState,
+    Msg,
 };
 
 use self::{
@@ -82,6 +86,8 @@ impl<'a> App<'a> {
     pub fn update(&mut self, msg: Msg) -> anyhow::Result<impl IntoCommand> {
         tracing::trace!("handling msg: {:?}", msg);
 
+        let mut batch = BatchCommand::default();
+
         match &msg {
             Msg::MoveRight => self.graph_explorer.move_right()?,
             Msg::MoveLeft => self.graph_explorer.move_left()?,
@@ -97,7 +103,10 @@ impl<'a> App<'a> {
             }
             Msg::Interact => match self.focus {
                 AppFocus::Dialog => {}
-                AppFocus::Graph => self.graph_explorer.interact()?,
+                AppFocus::Graph => {
+                    let cmd = self.graph_explorer.interact()?;
+                    batch.with(cmd);
+                }
             },
             Msg::SubmitCommand { command } => {
                 tracing::info!("submitting command");
@@ -112,7 +121,7 @@ impl<'a> App<'a> {
                                     }
                                 }
 
-                                self.graph_explorer.update_graph()?;
+                                batch.with(self.graph_explorer.new_update_graph());
                             }
 
                             if command.is_quit() {
@@ -121,26 +130,31 @@ impl<'a> App<'a> {
                             }
                         }
                         AppFocus::Graph => {
-                            if let Some(msg) = self.graph_explorer.execute_command(&command)? {
+                            if let Some(cmd) = self.graph_explorer.execute_command(&command)? {
                                 self.command = None;
-                                return Ok(msg.into_command());
+                                batch.with(cmd);
                             }
 
                             if command.is_quit() {
-                                return Ok(Msg::QuitApp.into_command());
+                                batch.with(Msg::QuitApp.into_command());
                             }
                         }
                     }
                 }
                 self.command = None;
-                return Ok(Msg::EnterViewMode.into_command());
+                batch.with(Msg::EnterViewMode.into_command());
             }
             _ => {}
         }
 
+        let cmd = self.graph_explorer.inner.update(&msg);
+        if let Some(cmd) = cmd {
+            batch.with(cmd);
+        }
+
         if let Some(command) = &mut self.command {
             let cmd = command.update(&msg)?;
-            return Ok(cmd.into_command());
+            batch.with(cmd);
         } else if let Some(dialog) = &mut self.dialog {
             match dialog {
                 Dialog::CreateItem { state } => state.update(&msg)?,
@@ -148,7 +162,7 @@ impl<'a> App<'a> {
             }
         }
 
-        Ok(().into_command())
+        Ok(batch.into_command())
     }
 
     fn open_dialog(&mut self) {

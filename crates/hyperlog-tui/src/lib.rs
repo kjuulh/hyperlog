@@ -60,7 +60,7 @@ async fn run(terminal: &mut Terminal<CrosstermBackend<Stdout>>, state: SharedSta
     };
 
     let mut graph_explorer = GraphExplorer::new(root.clone(), state.clone());
-    graph_explorer.update_graph()?;
+    graph_explorer.update_graph().await?;
 
     let mut app = App::new(&root, state.clone(), graph_explorer);
     let (dispatch, mut receiver) = commands::create_dispatch();

@@ -5,10 +5,12 @@ use crate::shared_engine::SharedEngine;
 mod local;
 mod remote;
 
+#[derive(Clone)]
 enum QuerierVariant {
     Local(local::Querier),
 }
 
+#[derive(Clone)]
 pub struct Querier {
     variant: QuerierVariant,
 }
@@ -21,6 +23,16 @@ impl Querier {
     }
 
     pub fn get(
+        &self,
+        root: &str,
+        path: impl IntoIterator<Item = impl Into<String>>,
+    ) -> Option<GraphItem> {
+        match &self.variant {
+            QuerierVariant::Local(querier) => querier.get(root, path),
+        }
+    }
+
+    pub async fn get_async(
         &self,
         root: &str,
         path: impl IntoIterator<Item = impl Into<String>>,
