@@ -24,7 +24,7 @@ pub enum Msg {
 
 impl IntoCommand for Msg {
     fn into_command(self) -> crate::commands::Command {
-        Command::new(|| Some(self))
+        Command::new(|_| Some(self))
     }
 }
 

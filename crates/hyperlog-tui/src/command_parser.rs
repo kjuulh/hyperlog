@@ -10,6 +10,7 @@ pub enum Commands {
 
     ShowAll,
     HideDone,
+    Test,
 }
 
 impl Commands {
@@ -42,6 +43,7 @@ impl CommandParser {
                 "e" | "edit" => Some(Commands::Edit),
                 "show-all" => Some(Commands::ShowAll),
                 "hide-done" => Some(Commands::HideDone),
+                "test" => Some(Commands::Test),
                 _ => None,
             },
             None => None,

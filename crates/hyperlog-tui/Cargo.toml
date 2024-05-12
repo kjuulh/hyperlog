@@ -6,6 +6,7 @@ repository = "https://git.front.kjuulh.io/kjuulh/hyperlog"
 
 [dependencies]
 hyperlog-core.workspace = true
+hyperlog-protos.workspace = true
 
 anyhow.workspace = true
 tokio.workspace = true
@@ -14,6 +15,8 @@ tracing-subscriber.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 itertools.workspace = true
+tonic.workspace = true
+futures.workspace = true
 
 ratatui = "0.26.2"
 crossterm = { version = "0.27.0", features = ["event-stream"] }

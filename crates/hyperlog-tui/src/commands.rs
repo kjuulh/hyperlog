@@ -1,3 +1,5 @@
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+
 use crate::models::Msg;
 
 pub trait IntoCommand {
@@ -6,7 +8,7 @@ pub trait IntoCommand {
 
 impl IntoCommand for () {
     fn into_command(self) -> Command {
-        Command::new(|| None)
+        Command::new(|_| None)
     }
 }
 
@@ -16,16 +18,47 @@ impl IntoCommand for Command {
     }
 }
 
+type CommandFunc = dyn FnOnce(Dispatch) -> Option<Msg>;
+
 pub struct Command {
-    func: Box<dyn FnOnce() -> Option<Msg>>,
+    func: Box<CommandFunc>,
 }
 
 impl Command {
-    pub fn new<T: FnOnce() -> Option<Msg> + 'static>(f: T) -> Self {
+    pub fn new<T: FnOnce(Dispatch) -> Option<Msg> + 'static>(f: T) -> Self {
         Self { func: Box::new(f) }
     }
 
-    pub fn execute(self) -> Option<Msg> {
-        self.func.call_once(())
+    pub fn execute(self, dispatch: Dispatch) -> Option<Msg> {
+        self.func.call_once((dispatch,))
+    }
+}
+
+pub fn create_dispatch() -> (Dispatch, Receiver) {
+    let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+
+    (Dispatch { sender: tx }, Receiver { receiver: rx })
+}
+
+#[derive(Clone)]
+pub struct Dispatch {
+    sender: UnboundedSender<Msg>,
+}
+
+impl Dispatch {
+    pub fn send(&self, msg: Msg) {
+        if let Err(e) = self.sender.send(msg) {
+            tracing::warn!("failed to send event: {}", e);
+        }
+    }
+}
+
+pub struct Receiver {
+    receiver: UnboundedReceiver<Msg>,
+}
+
+impl Receiver {
+    pub async fn next(&mut self) -> Option<Msg> {
+        self.receiver.recv().await
     }
 }

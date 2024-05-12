@@ -26,7 +26,7 @@ impl State {
             events: events.clone(),
 
             commander: Commander::new(engine.clone(), storage, events)?,
-            querier: Querier::new(engine),
+            querier: Querier::local(&engine),
         })
     }
 }

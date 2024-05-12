@@ -2,17 +2,22 @@ use hyperlog_core::log::GraphItem;
 
 use crate::shared_engine::SharedEngine;
 
+mod local;
+mod remote;
+
+enum QuerierVariant {
+    Local(local::Querier),
+}
+
 pub struct Querier {
-    engine: SharedEngine,
+    variant: QuerierVariant,
 }
 
 impl Querier {
-    pub fn new(engine: SharedEngine) -> Self {
-        Self { engine }
-    }
-
-    pub fn get_available_roots(&self) -> Option<Vec<String>> {
-        self.engine.get_roots()
+    pub fn local(engine: &SharedEngine) -> Self {
+        Self {
+            variant: QuerierVariant::Local(local::Querier::new(engine)),
+        }
     }
 
     pub fn get(
@@ -20,20 +25,14 @@ impl Querier {
         root: &str,
         path: impl IntoIterator<Item = impl Into<String>>,
     ) -> Option<GraphItem> {
-        let path = path
-            .into_iter()
-            .map(|i| i.into())
-            .filter(|i| !i.is_empty())
-            .collect::<Vec<String>>();
+        match &self.variant {
+            QuerierVariant::Local(querier) => querier.get(root, path),
+        }
+    }
 
-        tracing::debug!(
-            "quering: root:({}), path:({}), len: ({}))",
-            root,
-            path.join("."),
-            path.len()
-        );
-
-        self.engine
-            .get(root, &path.iter().map(|i| i.as_str()).collect::<Vec<_>>())
+    pub fn get_available_roots(&self) -> Option<Vec<String>> {
+        match &self.variant {
+            QuerierVariant::Local(querier) => querier.get_available_roots(),
+        }
     }
 }

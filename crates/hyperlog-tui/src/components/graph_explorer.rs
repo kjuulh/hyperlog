@@ -3,7 +3,11 @@ use hyperlog_core::log::GraphItem;
 use ratatui::{prelude::*, widgets::*};
 
 use crate::{
-    command_parser::Commands, commander, components::movement_graph::GraphItemType, models::Msg,
+    command_parser::Commands,
+    commander,
+    commands::{Command, IntoCommand},
+    components::movement_graph::GraphItemType,
+    models::Msg,
     state::SharedState,
 };
 
@@ -184,7 +188,7 @@ impl<'a> GraphExplorer<'a> {
         }
     }
 
-    pub fn execute_command(&mut self, command: &Commands) -> anyhow::Result<Option<Msg>> {
+    pub fn execute_command(&mut self, command: &Commands) -> anyhow::Result<Option<Command>> {
         match command {
             Commands::Archive => {
                 if !self.get_current_path().is_empty() {
@@ -220,7 +224,9 @@ impl<'a> GraphExplorer<'a> {
                         GraphItemType::Item { .. } => {
                             if let Some(item) = self.state.querier.get(&self.inner.root, path) {
                                 if let GraphItem::Item { .. } = item {
-                                    return Ok(Some(Msg::OpenEditItemDialog { item }));
+                                    return Ok(Some(
+                                        Msg::OpenEditItemDialog { item }.into_command(),
+                                    ));
                                 }
                             }
                         }
@@ -233,6 +239,18 @@ impl<'a> GraphExplorer<'a> {
             Commands::HideDone => {
                 self.inner.display_options.filter_by = FilterBy::NotDone;
             }
+            Commands::Test => {
+                return Ok(Some(Command::new(|dispatch| {
+                    tokio::spawn(async move {
+                        dispatch.send(Msg::MoveDown);
+                        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+                        dispatch.send(Msg::EnterViewMode);
+                    });
+
+                    None
+                })));
+            }
+
             _ => (),
         }
 

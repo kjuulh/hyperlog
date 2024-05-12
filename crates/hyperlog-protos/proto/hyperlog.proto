@@ -15,16 +15,16 @@ message SectionGraphItem {
   map<string, GraphItem> items = 1;
 }
 
-enum ItemState {
-  UNSPECIFIED = 0;
-  NOT_DONE = 1;
-  DONE = 2;
-}
+message ItemStateNotDone {}
+message ItemStateDone {}
 
 message ItemGraphItem {
   string title = 1;
   string description = 2;
-  ItemState state = 3;
+  oneof item_state {
+    ItemStateNotDone not_done = 3;
+    ItemStateDone done = 4;
+  }
 }
 
 message GraphItem {
@@ -42,6 +42,6 @@ message GetRequest {
 }
 
 message GetReply {
-  repeated GraphItem items = 1;
+  GraphItem item = 1;
 }
 

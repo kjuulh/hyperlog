@@ -32,28 +32,14 @@ impl Graph for Server {
         tracing::trace!("get: req({:?})", msg);
 
         Ok(Response::new(GetReply {
-            items: vec![
-                GraphItem {
-                    path: "some.path".into(),
-                    contents: Some(graph_item::Contents::Item(ItemGraphItem {
-                        title: "some-title".into(),
-                        description: "some-description".into(),
-                        state: ItemState::NotDone as i32,
-                    })),
-                },
-                GraphItem {
-                    path: "some.path.section".into(),
-                    contents: Some(graph_item::Contents::Section(SectionGraphItem {
-                        items: HashMap::new(),
-                    })),
-                },
-                GraphItem {
-                    path: "some.path".into(),
-                    contents: Some(graph_item::Contents::User(UserGraphItem {
-                        items: HashMap::new(),
-                    })),
-                },
-            ],
+            item: Some(GraphItem {
+                path: "some.path".into(),
+                contents: Some(graph_item::Contents::Item(ItemGraphItem {
+                    title: "some-title".into(),
+                    description: "some-description".into(),
+                    item_state: Some(item_graph_item::ItemState::Done(ItemStateDone {})),
+                })),
+            }),
         }))
     }
 }
