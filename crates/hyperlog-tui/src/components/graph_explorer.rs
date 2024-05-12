@@ -11,7 +11,7 @@ use crate::{
         IntoCommand,
     },
     components::movement_graph::GraphItemType,
-    models::{GraphUpdatedEvent, Msg},
+    models::{IOEvent, Msg},
     state::SharedState,
 };
 
@@ -58,17 +58,17 @@ impl<'a> GraphExplorerState<'a> {
     pub fn update(&mut self, msg: &Msg) -> Option<Command> {
         if let Msg::GraphUpdated(graph_update) = msg {
             match graph_update {
-                GraphUpdatedEvent::Initiated => {
+                IOEvent::Initialized => {
                     tracing::trace!("initialized graph");
                 }
-                GraphUpdatedEvent::Success(graph) => {
+                IOEvent::Success(graph) => {
                     tracing::trace!("graph updated successfully");
                     self.graph = Some(graph.clone());
                 }
-                GraphUpdatedEvent::Failure(e) => {
+                IOEvent::Failure(e) => {
                     tracing::error!("graph update failed: {}", e);
                 }
-                GraphUpdatedEvent::Optimistic(graph) => {
+                IOEvent::Optimistic(graph) => {
                     tracing::trace!("graph updated optimistically");
                     self.graph = Some(graph.clone());
                 }

@@ -21,8 +21,7 @@ pub enum Msg {
 
     Edit(EditMsg),
 
-    GraphUpdated(GraphUpdatedEvent),
-
+    GraphUpdated(IOEvent<GraphItem>),
     ItemCreated(IOEvent<()>),
     ItemUpdated(IOEvent<()>),
     SectionCreated(IOEvent<()>),
@@ -34,14 +33,6 @@ pub enum IOEvent<T> {
     Initialized,
     Optimistic(T),
     Success(T),
-    Failure(String),
-}
-
-#[derive(Debug)]
-pub enum GraphUpdatedEvent {
-    Initiated,
-    Optimistic(GraphItem),
-    Success(GraphItem),
     Failure(String),
 }
 

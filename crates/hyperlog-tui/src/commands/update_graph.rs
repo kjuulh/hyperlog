@@ -1,7 +1,7 @@
 use itertools::Itertools;
 
 use crate::{
-    models::{GraphUpdatedEvent, Msg},
+    models::{IOEvent, Msg},
     querier::Querier,
     state::SharedState,
 };
@@ -22,27 +22,23 @@ impl UpdateGraphCommand {
         super::Command::new(|dispatch| {
             tokio::spawn(async move {
                 let now = std::time::SystemTime::now();
-                dispatch.send(Msg::GraphUpdated(GraphUpdatedEvent::Initiated));
+                dispatch.send(Msg::GraphUpdated(IOEvent::Initialized));
 
                 match self.querier.get_async(&root, path).await {
                     Ok(Some(graph)) => {
-                        dispatch.send(Msg::GraphUpdated(GraphUpdatedEvent::Optimistic(
-                            graph.clone(),
-                        )));
+                        dispatch.send(Msg::GraphUpdated(IOEvent::Optimistic(graph.clone())));
 
                         #[cfg(debug_assertions)]
                         {
                             tokio::time::sleep(std::time::Duration::from_secs(1)).await;
                         }
 
-                        dispatch.send(Msg::GraphUpdated(GraphUpdatedEvent::Success(graph)))
+                        dispatch.send(Msg::GraphUpdated(IOEvent::Success(graph)))
                     }
-                    Ok(None) => dispatch.send(Msg::GraphUpdated(GraphUpdatedEvent::Failure(
+                    Ok(None) => dispatch.send(Msg::GraphUpdated(IOEvent::Failure(
                         "graph was not found user root".into(),
                     ))),
-                    Err(e) => dispatch.send(Msg::GraphUpdated(GraphUpdatedEvent::Failure(
-                        format!("{e}"),
-                    ))),
+                    Err(e) => dispatch.send(Msg::GraphUpdated(IOEvent::Failure(format!("{e}")))),
                 }
 
                 let elapsed = now.elapsed().expect("to be able to get time");
