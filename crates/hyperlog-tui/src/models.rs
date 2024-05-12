@@ -27,6 +27,7 @@ pub enum Msg {
 #[derive(Debug)]
 pub enum GraphUpdatedEvent {
     Initiated,
+    Optimistic(GraphItem),
     Success(GraphItem),
     Failure(String),
 }

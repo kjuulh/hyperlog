@@ -6,8 +6,6 @@ use crate::{
     state::SharedState,
 };
 
-use super::IntoCommand;
-
 pub struct UpdateGraphCommand {
     querier: Querier,
 }
@@ -26,11 +24,6 @@ impl UpdateGraphCommand {
                 let now = std::time::SystemTime::now();
                 dispatch.send(Msg::GraphUpdated(GraphUpdatedEvent::Initiated));
 
-                #[cfg(debug_assertions)]
-                {
-                    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-                }
-
                 match self
                     .querier
                     .get_async(&root, path)
@@ -38,6 +31,15 @@ impl UpdateGraphCommand {
                     .ok_or(anyhow::anyhow!("failed to find path"))
                 {
                     Ok(graph) => {
+                        dispatch.send(Msg::GraphUpdated(GraphUpdatedEvent::Optimistic(
+                            graph.clone(),
+                        )));
+
+                        #[cfg(debug_assertions)]
+                        {
+                            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+                        }
+
                         dispatch.send(Msg::GraphUpdated(GraphUpdatedEvent::Success(graph)))
                     }
                     Err(e) => dispatch.send(Msg::GraphUpdated(GraphUpdatedEvent::Failure(

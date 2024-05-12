@@ -1,9 +1,8 @@
-use std::{collections::HashMap, net::SocketAddr};
-
 use hyperlog_protos::hyperlog::{
     graph_server::{Graph, GraphServer},
     *,
 };
+use std::net::SocketAddr;
 use tonic::{transport, Response};
 
 use crate::{
@@ -11,6 +10,7 @@ use crate::{
     state::SharedState,
 };
 
+#[allow(dead_code)]
 pub struct Server {
     querier: Querier,
 }

@@ -1,5 +1,6 @@
 use hyperlog_core::log::{GraphItem, ItemState};
 
+#[allow(dead_code)]
 pub enum Command {
     CreateRoot {
         root: String,
@@ -33,8 +34,10 @@ pub enum Command {
     },
 }
 
+#[allow(dead_code)]
 pub struct Commander {}
 
+#[allow(dead_code, unused_variables)]
 impl Commander {
     pub fn execute(&self, cmd: Command) -> anyhow::Result<()> {
         match cmd {
@@ -57,8 +60,6 @@ impl Commander {
             Command::ToggleItem { root, path } => todo!(),
             Command::Move { root, src, dest } => todo!(),
         }
-
-        Ok(())
     }
 
     pub async fn create_root(&self, root: &str) -> anyhow::Result<()> {

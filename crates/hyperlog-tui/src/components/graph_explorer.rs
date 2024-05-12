@@ -65,6 +65,10 @@ impl<'a> GraphExplorerState<'a> {
                 GraphUpdatedEvent::Failure(e) => {
                     tracing::error!("graph update failed: {}", e);
                 }
+                GraphUpdatedEvent::Optimistic(graph) => {
+                    tracing::trace!("graph updated optimistically");
+                    self.graph = Some(graph.clone());
+                }
             }
         }
 

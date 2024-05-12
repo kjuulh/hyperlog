@@ -31,7 +31,6 @@ impl IntoCommand for BatchCommand {
             for command in self.commands {
                 let msg = command.execute(dispatch.clone());
                 if let Some(msg) = msg {
-                    tracing::info!("executing batch command for msg: {:?}", msg);
                     dispatch.send(msg);
                 }
             }

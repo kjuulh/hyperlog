@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 use clap::{Parser, Subcommand};
-use hyperlog_tui::{commander, core_state::State, state};
+use hyperlog_tui::{commander, core_state::State};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
