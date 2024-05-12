@@ -1,5 +1,6 @@
 #![feature(map_try_insert)]
 #![feature(fn_traits)]
+#![feature(let_chains)]
 
 use std::io::Stdout;
 
@@ -109,52 +110,50 @@ async fn update<'a>(
     let mut handle_key_event = |maybe_event| -> anyhow::Result<UpdateConclusion> {
         match maybe_event {
             Some(Ok(e)) => {
-                if let Event::Key(key) = e {
-                    if key.kind == KeyEventKind::Press {
-                        let mut cmd = match &app.mode {
-                            app::Mode::View => match key.code {
-                                KeyCode::Enter => app.update(Msg::Interact)?,
-                                KeyCode::Char('l') => app.update(Msg::MoveRight)?,
-                                KeyCode::Char('h') => app.update(Msg::MoveLeft)?,
-                                KeyCode::Char('j') => app.update(Msg::MoveDown)?,
-                                KeyCode::Char('k') => app.update(Msg::MoveUp)?,
-                                KeyCode::Char('a') => {
-                                    // TODO: batch commands
-                                    app.update(Msg::OpenCreateItemDialog)?;
-                                    app.update(Msg::EnterInsertMode)?
-                                }
-                                KeyCode::Char('i') => app.update(Msg::EnterInsertMode)?,
-                                KeyCode::Char(':') => app.update(Msg::EnterCommandMode)?,
-                                _ => return Ok(UpdateConclusion(false)),
-                            },
-
-                            app::Mode::Command | app::Mode::Insert => match key.code {
-                                KeyCode::Backspace => app.update(Msg::Edit(EditMsg::Delete))?,
-                                KeyCode::Enter => app.update(Msg::Edit(EditMsg::InsertNewLine))?,
-                                KeyCode::Tab => app.update(Msg::Edit(EditMsg::InsertTab))?,
-                                KeyCode::Delete => app.update(Msg::Edit(EditMsg::DeleteNext))?,
-                                KeyCode::Char(c) => {
-                                    app.update(Msg::Edit(EditMsg::InsertChar(c)))?
-                                }
-                                KeyCode::Left => app.update(Msg::Edit(EditMsg::MoveLeft))?,
-                                KeyCode::Right => app.update(Msg::Edit(EditMsg::MoveRight))?,
-                                KeyCode::Esc => app.update(Msg::EnterViewMode)?,
-                                _ => return Ok(UpdateConclusion(false)),
-                            },
-                        };
-
-                        loop {
-                            let msg = cmd.into_command().execute(dispatch.clone());
-                            match msg {
-                                Some(msg) => {
-                                    if let Msg::QuitApp = msg {
-                                        return Ok(UpdateConclusion(true));
-                                    }
-
-                                    cmd = app.update(msg)?;
-                                }
-                                None => break,
+                if let Event::Key(key) = e
+                    && key.kind == KeyEventKind::Press
+                {
+                    let mut cmd = match &app.mode {
+                        app::Mode::View => match key.code {
+                            KeyCode::Enter => app.update(Msg::Interact)?,
+                            KeyCode::Char('l') => app.update(Msg::MoveRight)?,
+                            KeyCode::Char('h') => app.update(Msg::MoveLeft)?,
+                            KeyCode::Char('j') => app.update(Msg::MoveDown)?,
+                            KeyCode::Char('k') => app.update(Msg::MoveUp)?,
+                            KeyCode::Char('a') => {
+                                // TODO: batch commands
+                                app.update(Msg::OpenCreateItemDialog)?;
+                                app.update(Msg::EnterInsertMode)?
                             }
+                            KeyCode::Char('i') => app.update(Msg::EnterInsertMode)?,
+                            KeyCode::Char(':') => app.update(Msg::EnterCommandMode)?,
+                            _ => return Ok(UpdateConclusion(false)),
+                        },
+
+                        app::Mode::Command | app::Mode::Insert => match key.code {
+                            KeyCode::Backspace => app.update(Msg::Edit(EditMsg::Delete))?,
+                            KeyCode::Enter => app.update(Msg::Edit(EditMsg::InsertNewLine))?,
+                            KeyCode::Tab => app.update(Msg::Edit(EditMsg::InsertTab))?,
+                            KeyCode::Delete => app.update(Msg::Edit(EditMsg::DeleteNext))?,
+                            KeyCode::Char(c) => app.update(Msg::Edit(EditMsg::InsertChar(c)))?,
+                            KeyCode::Left => app.update(Msg::Edit(EditMsg::MoveLeft))?,
+                            KeyCode::Right => app.update(Msg::Edit(EditMsg::MoveRight))?,
+                            KeyCode::Esc => app.update(Msg::EnterViewMode)?,
+                            _ => return Ok(UpdateConclusion(false)),
+                        },
+                    };
+
+                    loop {
+                        let msg = cmd.into_command().execute(dispatch.clone());
+                        match msg {
+                            Some(msg) => {
+                                if let Msg::QuitApp = msg {
+                                    return Ok(UpdateConclusion(true));
+                                }
+
+                                cmd = app.update(msg)?;
+                            }
+                            None => break,
                         }
                     }
                 }

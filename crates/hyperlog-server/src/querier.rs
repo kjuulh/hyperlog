@@ -4,6 +4,7 @@ use crate::state::SharedState;
 
 pub struct Querier {}
 
+#[allow(dead_code, unused_variables)]
 impl Querier {
     pub fn new() -> Self {
         Self {}

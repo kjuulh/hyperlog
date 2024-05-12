@@ -5,12 +5,12 @@ use hyperlog_protos::hyperlog::{graph_client::GraphClient, graph_item::Contents,
 use itertools::Itertools;
 use tonic::transport::Channel;
 
-use crate::shared_engine::SharedEngine;
-
+#[allow(dead_code)]
 pub struct Querier {
     channel: Channel,
 }
 
+#[allow(dead_code, unused_variables)]
 impl Querier {
     pub async fn new() -> anyhow::Result<Self> {
         let channel = Channel::from_static("http://localhost:4000")
