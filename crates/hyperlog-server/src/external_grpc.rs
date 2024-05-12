@@ -64,6 +64,16 @@ impl Graph for Server {
             roots: vec!["kjuulh".into()],
         }))
     }
+
+    async fn create_section(
+        &self,
+        request: tonic::Request<CreateSectionRequest>,
+    ) -> std::result::Result<tonic::Response<CreateSectionResponse>, tonic::Status> {
+        let req = request.into_inner();
+        tracing::trace!("create section: req({:?})", req);
+
+        Ok(Response::new(CreateSectionResponse {}))
+    }
 }
 
 pub trait ServerExt {

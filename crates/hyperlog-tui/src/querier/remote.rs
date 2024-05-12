@@ -15,11 +15,7 @@ pub struct Querier {
 
 #[allow(dead_code, unused_variables)]
 impl Querier {
-    pub async fn new() -> anyhow::Result<Self> {
-        let channel = Channel::from_static("http://localhost:4000")
-            .connect()
-            .await?;
-
+    pub async fn new(channel: Channel) -> anyhow::Result<Self> {
         Ok(Self { channel })
     }
 

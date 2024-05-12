@@ -2,16 +2,6 @@ syntax = "proto3";
 
 package hyperlog;
 
-service Graph {
-  rpc GetAvailableRoots(GetAvailableRootsRequest) returns (GetAvailableRootsResponse);
-  rpc Get(GetRequest) returns (GetReply);
-}
-
-message GetAvailableRootsRequest {}
-message GetAvailableRootsResponse {
-  repeated string roots = 1;
-}
-
 message UserGraphItem {
   map<string, GraphItem> items = 1;
     
@@ -41,6 +31,17 @@ message GraphItem {
   }
 }
 
+service Graph {
+  rpc GetAvailableRoots(GetAvailableRootsRequest) returns (GetAvailableRootsResponse);
+  rpc Get(GetRequest) returns (GetReply);
+  rpc CreateSection(CreateSectionRequest) returns (CreateSectionResponse);
+}
+
+message GetAvailableRootsRequest {}
+message GetAvailableRootsResponse {
+  repeated string roots = 1;
+}
+
 message GetRequest {
   string root = 1;
   repeated string paths = 2;
@@ -49,4 +50,8 @@ message GetRequest {
 message GetReply {
   GraphItem item = 1;
 }
+
+
+message CreateSectionRequest {}
+message CreateSectionResponse {}
 

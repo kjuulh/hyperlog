@@ -3,7 +3,7 @@ use itertools::Itertools;
 
 use crate::{
     commander::{self, Commander},
-    models::IOEvent,
+    models::{IOEvent, Msg},
     state::SharedState,
 };
 
@@ -32,7 +32,7 @@ impl CreateItemCommand {
 
         super::Command::new(|dispatch| {
             tokio::spawn(async move {
-                dispatch.send(crate::models::Msg::ItemCreated(IOEvent::Initialized));
+                dispatch.send(Msg::ItemCreated(IOEvent::Initialized));
 
                 match self
                     .commander
@@ -50,12 +50,10 @@ impl CreateItemCommand {
                         {
                             tokio::time::sleep(std::time::Duration::from_secs(1)).await;
                         }
-                        dispatch.send(crate::models::Msg::ItemCreated(IOEvent::Success(())));
+                        dispatch.send(Msg::ItemCreated(IOEvent::Success(())));
                     }
                     Err(e) => {
-                        dispatch.send(crate::models::Msg::ItemCreated(IOEvent::Failure(
-                            e.to_string(),
-                        )));
+                        dispatch.send(Msg::ItemCreated(IOEvent::Failure(e.to_string())));
                     }
                 }
             });

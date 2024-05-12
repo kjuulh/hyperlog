@@ -1,3 +1,5 @@
+use tonic::transport::Channel;
+
 use crate::{
     commander::Commander, events::Events, querier::Querier, shared_engine::SharedEngine,
     storage::Storage,
@@ -25,14 +27,21 @@ impl State {
         let events = Events::default();
         let engine = SharedEngine::from(engine);
 
-        let querier = match backend {
-            Backend::Local => Querier::local(&engine),
-            Backend::Remote => Querier::remote().await?,
-        };
+        let (querier, commander) = match backend {
+            Backend::Local => (
+                Querier::local(&engine),
+                Commander::local(engine.clone(), storage.clone(), events.clone())?,
+            ),
+            Backend::Remote => {
+                let channel = Channel::from_static("http://localhost:4000")
+                    .connect()
+                    .await?;
 
-        let commander = match backend {
-            Backend::Local => Commander::local(engine.clone(), storage.clone(), events.clone())?,
-            Backend::Remote => todo!(),
+                (
+                    Querier::remote(channel.clone()).await?,
+                    Commander::remote(channel)?,
+                )
+            }
         };
 
         Ok(Self {

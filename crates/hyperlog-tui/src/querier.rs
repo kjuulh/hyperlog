@@ -1,4 +1,5 @@
 use hyperlog_core::log::GraphItem;
+use tonic::transport::Channel;
 
 use crate::shared_engine::SharedEngine;
 
@@ -23,9 +24,9 @@ impl Querier {
         }
     }
 
-    pub async fn remote() -> anyhow::Result<Self> {
+    pub async fn remote(channel: Channel) -> anyhow::Result<Self> {
         Ok(Self {
-            variant: QuerierVariant::Remote(remote::Querier::new().await?),
+            variant: QuerierVariant::Remote(remote::Querier::new(channel).await?),
         })
     }
 
