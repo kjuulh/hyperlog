@@ -8,6 +8,7 @@ mod remote;
 #[derive(Clone)]
 enum QuerierVariant {
     Local(local::Querier),
+    Remote(remote::Querier),
 }
 
 #[derive(Clone)]
@@ -22,6 +23,12 @@ impl Querier {
         }
     }
 
+    pub async fn remote() -> anyhow::Result<Self> {
+        Ok(Self {
+            variant: QuerierVariant::Remote(remote::Querier::new().await?),
+        })
+    }
+
     pub fn get(
         &self,
         root: &str,
@@ -29,6 +36,7 @@ impl Querier {
     ) -> Option<GraphItem> {
         match &self.variant {
             QuerierVariant::Local(querier) => querier.get(root, path),
+            QuerierVariant::Remote(_) => todo!(),
         }
     }
 
@@ -36,15 +44,24 @@ impl Querier {
         &self,
         root: &str,
         path: impl IntoIterator<Item = impl Into<String>>,
-    ) -> Option<GraphItem> {
+    ) -> anyhow::Result<Option<GraphItem>> {
         match &self.variant {
-            QuerierVariant::Local(querier) => querier.get(root, path),
+            QuerierVariant::Local(querier) => Ok(querier.get(root, path)),
+            QuerierVariant::Remote(querier) => querier.get(root, path).await,
         }
     }
 
     pub fn get_available_roots(&self) -> Option<Vec<String>> {
         match &self.variant {
             QuerierVariant::Local(querier) => querier.get_available_roots(),
+            QuerierVariant::Remote(_) => todo!(),
+        }
+    }
+
+    pub async fn get_available_roots_async(&self) -> anyhow::Result<Option<Vec<String>>> {
+        match &self.variant {
+            QuerierVariant::Local(querier) => Ok(querier.get_available_roots()),
+            QuerierVariant::Remote(querier) => Ok(querier.get_available_roots().await),
         }
     }
 }

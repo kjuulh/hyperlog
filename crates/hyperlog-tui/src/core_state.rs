@@ -13,12 +13,21 @@ pub struct State {
     pub querier: Querier,
 }
 
+pub enum Backend {
+    Local,
+    Remote,
+}
+
 impl State {
-    pub fn new() -> anyhow::Result<Self> {
+    pub async fn new(backend: Backend) -> anyhow::Result<Self> {
         let storage = Storage::new();
         let engine = storage.load()?;
         let events = Events::default();
         let engine = SharedEngine::from(engine);
+        let querier = match backend {
+            Backend::Local => Querier::local(&engine),
+            Backend::Remote => Querier::remote().await?,
+        };
 
         Ok(Self {
             engine: engine.clone(),
@@ -26,7 +35,7 @@ impl State {
             events: events.clone(),
 
             commander: Commander::new(engine.clone(), storage, events)?,
-            querier: Querier::local(&engine),
+            querier,
         })
     }
 }

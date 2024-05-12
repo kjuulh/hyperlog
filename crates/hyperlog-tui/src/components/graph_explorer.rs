@@ -114,7 +114,7 @@ impl<'a> GraphExplorer<'a> {
                     .map(|p| p.split('.').collect::<Vec<_>>())
                     .unwrap_or_default(),
             )
-            .await
+            .await?
             .ok_or(anyhow::anyhow!("graph should've had an item"))?;
 
         self.inner.graph = Some(graph);

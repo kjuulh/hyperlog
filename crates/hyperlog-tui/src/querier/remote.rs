@@ -6,6 +6,7 @@ use itertools::Itertools;
 use tonic::transport::Channel;
 
 #[allow(dead_code)]
+#[derive(Clone)]
 pub struct Querier {
     channel: Channel,
 }

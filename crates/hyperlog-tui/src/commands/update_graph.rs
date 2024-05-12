@@ -24,13 +24,8 @@ impl UpdateGraphCommand {
                 let now = std::time::SystemTime::now();
                 dispatch.send(Msg::GraphUpdated(GraphUpdatedEvent::Initiated));
 
-                match self
-                    .querier
-                    .get_async(&root, path)
-                    .await
-                    .ok_or(anyhow::anyhow!("failed to find path"))
-                {
-                    Ok(graph) => {
+                match self.querier.get_async(&root, path).await {
+                    Ok(Some(graph)) => {
                         dispatch.send(Msg::GraphUpdated(GraphUpdatedEvent::Optimistic(
                             graph.clone(),
                         )));
@@ -42,6 +37,9 @@ impl UpdateGraphCommand {
 
                         dispatch.send(Msg::GraphUpdated(GraphUpdatedEvent::Success(graph)))
                     }
+                    Ok(None) => dispatch.send(Msg::GraphUpdated(GraphUpdatedEvent::Failure(
+                        "graph was not found user root".into(),
+                    ))),
                     Err(e) => dispatch.send(Msg::GraphUpdated(GraphUpdatedEvent::Failure(
                         format!("{e}"),
                     ))),
