@@ -2,7 +2,7 @@ use hyperlog_protos::hyperlog::{
     graph_server::{Graph, GraphServer},
     *,
 };
-use std::net::SocketAddr;
+use std::{collections::HashMap, net::SocketAddr};
 use tonic::{transport, Response};
 
 use crate::{
@@ -33,13 +33,35 @@ impl Graph for Server {
 
         Ok(Response::new(GetReply {
             item: Some(GraphItem {
-                path: "some.path".into(),
-                contents: Some(graph_item::Contents::Item(ItemGraphItem {
-                    title: "some-title".into(),
-                    description: "some-description".into(),
-                    item_state: Some(item_graph_item::ItemState::Done(ItemStateDone {})),
+                path: "kjuulh".into(),
+                contents: Some(graph_item::Contents::User(UserGraphItem {
+                    items: HashMap::from([(
+                        "some".to_string(),
+                        GraphItem {
+                            path: "some".into(),
+                            contents: Some(graph_item::Contents::Item(ItemGraphItem {
+                                title: "some-title".into(),
+                                description: "some-description".into(),
+                                item_state: Some(item_graph_item::ItemState::NotDone(
+                                    ItemStateNotDone {},
+                                )),
+                            })),
+                        },
+                    )]),
                 })),
             }),
+        }))
+    }
+
+    async fn get_available_roots(
+        &self,
+        request: tonic::Request<GetAvailableRootsRequest>,
+    ) -> std::result::Result<tonic::Response<GetAvailableRootsResponse>, tonic::Status> {
+        let req = request.into_inner();
+        tracing::trace!("get available roots: req({:?})", req);
+
+        Ok(Response::new(GetAvailableRootsResponse {
+            roots: vec!["kjuulh".into()],
         }))
     }
 }

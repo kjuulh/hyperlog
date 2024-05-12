@@ -51,7 +51,7 @@ pub async fn execute(state: State) -> Result<()> {
 }
 
 async fn run(terminal: &mut Terminal<CrosstermBackend<Stdout>>, state: SharedState) -> Result<()> {
-    let root = match state.querier.get_available_roots() {
+    let root = match state.querier.get_available_roots_async().await? {
         // TODO: maybe present choose root screen
         Some(roots) => roots.first().cloned().unwrap(),
         None => {

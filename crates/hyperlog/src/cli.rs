@@ -115,19 +115,25 @@ pub async fn execute() -> anyhow::Result<()> {
         Some(Commands::Exec { commands }) => {
             let state = State::new(backend.into()).await?;
             match commands {
-                ExecCommands::CreateRoot { root } => state
-                    .commander
-                    .execute(commander::Command::CreateRoot { root })?,
+                ExecCommands::CreateRoot { root } => {
+                    state
+                        .commander
+                        .execute(commander::Command::CreateRoot { root })
+                        .await?
+                }
                 ExecCommands::CreateSection { root, path } => {
-                    state.commander.execute(commander::Command::CreateSection {
-                        root,
-                        path: path
-                            .unwrap_or_default()
-                            .split('.')
-                            .map(|s| s.to_string())
-                            .filter(|s| !s.is_empty())
-                            .collect::<Vec<String>>(),
-                    })?
+                    state
+                        .commander
+                        .execute(commander::Command::CreateSection {
+                            root,
+                            path: path
+                                .unwrap_or_default()
+                                .split('.')
+                                .map(|s| s.to_string())
+                                .filter(|s| !s.is_empty())
+                                .collect::<Vec<String>>(),
+                        })
+                        .await?
                 }
             }
         }
@@ -152,7 +158,8 @@ pub async fn execute() -> anyhow::Result<()> {
             let state = State::new(backend.into()).await?;
             state
                 .commander
-                .execute(commander::Command::CreateRoot { root: name })?;
+                .execute(commander::Command::CreateRoot { root: name })
+                .await?;
             println!("Root was successfully created, now run:\n\n$ hyperlog");
         }
         Some(Commands::Info {}) => {

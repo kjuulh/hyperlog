@@ -24,9 +24,15 @@ impl State {
         let engine = storage.load()?;
         let events = Events::default();
         let engine = SharedEngine::from(engine);
+
         let querier = match backend {
             Backend::Local => Querier::local(&engine),
             Backend::Remote => Querier::remote().await?,
+        };
+
+        let commander = match backend {
+            Backend::Local => Commander::local(engine.clone(), storage.clone(), events.clone())?,
+            Backend::Remote => todo!(),
         };
 
         Ok(Self {
@@ -34,7 +40,7 @@ impl State {
             storage: storage.clone(),
             events: events.clone(),
 
-            commander: Commander::new(engine.clone(), storage, events)?,
+            commander,
             querier,
         })
     }

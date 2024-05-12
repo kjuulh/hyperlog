@@ -5,8 +5,11 @@ use ratatui::{prelude::*, widgets::*};
 
 use crate::{
     command_parser::Commands,
-    commander,
-    commands::{update_graph::UpdateGraphCommandExt, Command, IntoCommand},
+    commands::{
+        batch::BatchCommand, create_section::CreateSectionCommandExt,
+        toggle_item::ToggleItemCommandExt, update_graph::UpdateGraphCommandExt, Command,
+        IntoCommand,
+    },
     components::movement_graph::GraphItemType,
     models::{GraphUpdatedEvent, Msg},
     state::SharedState,
@@ -227,6 +230,8 @@ impl<'a> GraphExplorer<'a> {
     }
 
     pub fn execute_command(&mut self, command: &Commands) -> anyhow::Result<Option<Command>> {
+        let mut batch = BatchCommand::default();
+
         match command {
             Commands::Archive => {
                 if !self.get_current_path().is_empty() {
@@ -238,12 +243,19 @@ impl<'a> GraphExplorer<'a> {
                     let mut path = self.get_current_path();
                     path.push(name.replace(" ", "-").replace(".", "-"));
 
-                    self.state
-                        .commander
-                        .execute(commander::Command::CreateSection {
-                            root: self.inner.root.clone(),
-                            path,
-                        })?;
+                    // self.state
+                    //     .commander
+                    //     .execute(commander::Command::CreateSection {
+                    //         root: self.inner.root.clone(),
+                    //         path,
+                    //     })?;
+
+                    let cmd = self.state.create_section_command().command(
+                        &self.inner.root,
+                        &path.iter().map(|i| i.as_str()).collect_vec(),
+                    );
+
+                    batch.with(cmd.into_command());
                 }
             }
             Commands::Edit => {
@@ -294,24 +306,37 @@ impl<'a> GraphExplorer<'a> {
 
         //self.update_graph()?;
 
-        Ok(Some(self.new_update_graph()))
+        Ok(Some(batch.into_command()))
     }
 
     pub(crate) fn interact(&mut self) -> anyhow::Result<Command> {
+        let mut batch = BatchCommand::default();
+
         if !self.get_current_path().is_empty() {
             tracing::info!("toggling state of items");
 
-            self.state
-                .commander
-                .execute(commander::Command::ToggleItem {
-                    root: self.inner.root.to_string(),
-                    path: self.get_current_path(),
-                })?;
+            // self.state
+            //     .commander
+            //     .execute(commander::Command::ToggleItem {
+            //         root: self.inner.root.to_string(),
+            //         path: self.get_current_path(),
+            //     })?;
+
+            let cmd = self.state.toggle_item_command().command(
+                &self.inner.root,
+                &self
+                    .get_current_path()
+                    .iter()
+                    .map(|i| i.as_str())
+                    .collect_vec(),
+            );
+
+            batch.with(cmd.into_command());
         }
 
         //self.update_graph()?;
 
-        Ok(self.new_update_graph())
+        Ok(batch.into_command())
     }
 }
 

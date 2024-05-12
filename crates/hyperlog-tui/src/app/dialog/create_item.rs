@@ -1,7 +1,12 @@
+use hyperlog_core::log::ItemState;
 use itertools::Itertools;
 use ratatui::{prelude::*, widgets::*};
 
-use crate::{commander, models::Msg};
+use crate::{
+    commands::{create_item::CreateItemCommandExt, IntoCommand},
+    models::Msg,
+    state::SharedState,
+};
 
 use super::{InputBuffer, InputField};
 
@@ -23,10 +28,16 @@ pub struct CreateItemState {
     description: InputBuffer,
 
     focused: CreateItemFocused,
+
+    state: SharedState,
 }
 
 impl CreateItemState {
-    pub fn new(root: impl Into<String>, path: impl IntoIterator<Item = impl Into<String>>) -> Self {
+    pub fn new(
+        state: &SharedState,
+        root: impl Into<String>,
+        path: impl IntoIterator<Item = impl Into<String>>,
+    ) -> Self {
         let root = root.into();
         let path = path.into_iter().map(|p| p.into()).collect_vec();
 
@@ -37,6 +48,8 @@ impl CreateItemState {
             title: Default::default(),
             description: Default::default(),
             focused: Default::default(),
+
+            state: state.clone(),
         }
     }
 
@@ -61,7 +74,7 @@ impl CreateItemState {
         Ok(())
     }
 
-    pub fn get_command(&self) -> Option<commander::Command> {
+    pub fn get_command(&self) -> Option<impl IntoCommand> {
         let title = self.title.string();
         let description = self.description.string();
 
@@ -69,13 +82,21 @@ impl CreateItemState {
             let mut path = self.path.clone();
             path.push(title.replace([' ', '.'], "-"));
 
-            Some(commander::Command::CreateItem {
-                root: self.root.clone(),
-                path,
-                title: title.trim().into(),
-                description: description.trim().into(),
-                state: hyperlog_core::log::ItemState::NotDone,
-            })
+            Some(self.state.create_item_command().command(
+                &self.root,
+                &path.iter().map(|i| i.as_str()).collect_vec(),
+                title.trim(),
+                description.trim(),
+                &ItemState::NotDone,
+            ))
+
+            // Some(commander::Command::CreateItem {
+            //     root: self.root.clone(),
+            //     path,
+            //     title: title.trim().into(),
+            //     description: description.trim().into(),
+            //     state: hyperlog_core::log::ItemState::NotDone,
+            // })
         } else {
             None
         }

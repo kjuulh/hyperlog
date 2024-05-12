@@ -61,7 +61,7 @@ impl Querier {
     pub async fn get_available_roots_async(&self) -> anyhow::Result<Option<Vec<String>>> {
         match &self.variant {
             QuerierVariant::Local(querier) => Ok(querier.get_available_roots()),
-            QuerierVariant::Remote(querier) => Ok(querier.get_available_roots().await),
+            QuerierVariant::Remote(querier) => querier.get_available_roots().await,
         }
     }
 }

@@ -36,7 +36,10 @@ impl Querier {
             path.len()
         );
 
-        self.engine
-            .get(root, &path.iter().map(|i| i.as_str()).collect::<Vec<_>>())
+        let item = self
+            .engine
+            .get(root, &path.iter().map(|i| i.as_str()).collect::<Vec<_>>());
+
+        item
     }
 }

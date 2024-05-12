@@ -3,9 +3,14 @@ syntax = "proto3";
 package hyperlog;
 
 service Graph {
+  rpc GetAvailableRoots(GetAvailableRootsRequest) returns (GetAvailableRootsResponse);
   rpc Get(GetRequest) returns (GetReply);
 }
 
+message GetAvailableRootsRequest {}
+message GetAvailableRootsResponse {
+  repeated string roots = 1;
+}
 
 message UserGraphItem {
   map<string, GraphItem> items = 1;

@@ -6,9 +6,9 @@ use ratatui::{
 
 use crate::{
     command_parser::CommandParser,
-    commander,
     commands::{batch::BatchCommand, IntoCommand},
     components::graph_explorer::GraphExplorer,
+    models::IOEvent,
     state::SharedState,
     Msg,
 };
@@ -30,10 +30,10 @@ pub enum Dialog {
 }
 
 impl Dialog {
-    pub fn get_command(&self) -> Option<commander::Command> {
+    pub fn get_command(&self) -> Option<impl IntoCommand> {
         match self {
-            Dialog::CreateItem { state } => state.get_command(),
-            Dialog::EditItem { state } => state.get_command(),
+            Dialog::CreateItem { state } => state.get_command().map(|c| c.into_command()),
+            Dialog::EditItem { state } => state.get_command().map(|c| c.into_command()),
         }
     }
 }
@@ -89,6 +89,12 @@ impl<'a> App<'a> {
         let mut batch = BatchCommand::default();
 
         match &msg {
+            Msg::ItemCreated(IOEvent::Success(()))
+            | Msg::ItemUpdated(IOEvent::Success(()))
+            | Msg::SectionCreated(IOEvent::Success(()))
+            | Msg::ItemToggled(IOEvent::Success(())) => {
+                batch.with(self.graph_explorer.new_update_graph());
+            }
             Msg::MoveRight => self.graph_explorer.move_right()?,
             Msg::MoveLeft => self.graph_explorer.move_left()?,
             Msg::MoveDown => self.graph_explorer.move_down()?,
@@ -117,11 +123,9 @@ impl<'a> App<'a> {
                             if command.is_write() {
                                 if let Some(dialog) = &self.dialog {
                                     if let Some(output) = dialog.get_command() {
-                                        self.state.commander.execute(output)?;
+                                        batch.with(output.into_command());
                                     }
                                 }
-
-                                batch.with(self.graph_explorer.new_update_graph());
                             }
 
                             if command.is_quit() {
@@ -172,7 +176,7 @@ impl<'a> App<'a> {
 
             self.focus = AppFocus::Dialog;
             self.dialog = Some(Dialog::CreateItem {
-                state: CreateItemState::new(root, path),
+                state: CreateItemState::new(&self.state, root, path),
             });
         }
     }
@@ -183,7 +187,7 @@ impl<'a> App<'a> {
             let path = self.graph_explorer.get_current_path();
 
             self.dialog = Some(Dialog::EditItem {
-                state: EditItemState::new(root, path, item),
+                state: EditItemState::new(&self.state, root, path, item),
             });
             self.command = None;
             self.focus = AppFocus::Dialog;

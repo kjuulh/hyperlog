@@ -1,7 +1,9 @@
 use std::collections::BTreeMap;
 
 use hyperlog_core::log::GraphItem;
-use hyperlog_protos::hyperlog::{graph_client::GraphClient, graph_item::Contents, GetRequest};
+use hyperlog_protos::hyperlog::{
+    graph_client::GraphClient, graph_item::Contents, GetAvailableRootsRequest, GetRequest,
+};
 use itertools::Itertools;
 use tonic::transport::Channel;
 
@@ -21,9 +23,21 @@ impl Querier {
         Ok(Self { channel })
     }
 
-    pub async fn get_available_roots(&self) -> Option<Vec<String>> {
-        //self.engine.get_roots()
-        todo!()
+    pub async fn get_available_roots(&self) -> anyhow::Result<Option<Vec<String>>> {
+        let channel = self.channel.clone();
+
+        let mut client = GraphClient::new(channel);
+
+        let request = tonic::Request::new(GetAvailableRootsRequest {});
+        let response = client.get_available_roots(request).await?;
+
+        let roots = response.into_inner();
+
+        if roots.roots.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(roots.roots))
+        }
     }
 
     pub async fn get(
@@ -54,7 +68,8 @@ impl Querier {
         let graph_item = response.into_inner();
 
         if let Some(item) = graph_item.item {
-            Ok(transform_proto_to_local(&item))
+            let local_graph = transform_proto_to_local(&item);
+            Ok(local_graph)
         } else {
             Ok(None)
         }

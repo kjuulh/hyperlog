@@ -2,7 +2,11 @@ use hyperlog_core::log::GraphItem;
 use itertools::Itertools;
 use ratatui::{prelude::*, widgets::*};
 
-use crate::{commander, models::Msg};
+use crate::{
+    commands::{update_item::UpdateItemCommandExt, IntoCommand},
+    models::Msg,
+    state::SharedState,
+};
 
 use super::{InputBuffer, InputField};
 
@@ -26,10 +30,13 @@ pub struct EditItemState {
     item: GraphItem,
 
     focused: EditItemFocused,
+
+    state: SharedState,
 }
 
 impl EditItemState {
     pub fn new(
+        state: &SharedState,
         root: impl Into<String>,
         path: impl IntoIterator<Item = impl Into<String>>,
         item: &GraphItem,
@@ -47,6 +54,8 @@ impl EditItemState {
                 title.set_position(title_len);
 
                 Self {
+                    state: state.clone(),
+
                     root,
                     path,
 
@@ -82,24 +91,36 @@ impl EditItemState {
         Ok(())
     }
 
-    pub fn get_command(&self) -> Option<commander::Command> {
+    pub fn get_command(&self) -> Option<impl IntoCommand> {
         let title = self.title.string();
         let description = self.description.string();
 
         if !title.is_empty() {
             let path = self.path.clone();
 
-            Some(commander::Command::UpdateItem {
-                root: self.root.clone(),
-                path,
-                title: title.trim().into(),
-                description: description.trim().into(),
-                state: match &self.item {
+            Some(self.state.update_item_command().command(
+                &self.root,
+                &path.iter().map(|s| s.as_str()).collect_vec(),
+                title.trim(),
+                description.trim(),
+                match &self.item {
                     GraphItem::User(_) => Default::default(),
                     GraphItem::Section(_) => Default::default(),
                     GraphItem::Item { state, .. } => state.clone(),
                 },
-            })
+            ))
+
+            // Some(commander::Command::UpdateItem {
+            //     root: self.root.clone(),
+            //     path,
+            //     title: title.trim().into(),
+            //     description: description.trim().into(),
+            //     state: match &self.item {
+            //         GraphItem::User(_) => Default::default(),
+            //         GraphItem::Section(_) => Default::default(),
+            //         GraphItem::Item { state, .. } => state.clone(),
+            //     },
+            // })
         } else {
             None
         }
