@@ -1,7 +1,8 @@
-use hyperlog_core::log::{GraphItem, ItemState};
+use hyperlog_core::log::ItemState;
 
 use crate::{
     services::{
+        create_item::{self, CreateItem, CreateItemExt},
         create_root::{self, CreateRoot, CreateRootExt},
         create_section::{self, CreateSection, CreateSectionExt},
     },
@@ -46,13 +47,19 @@ pub enum Command {
 pub struct Commander {
     create_root: CreateRoot,
     create_section: CreateSection,
+    create_item: CreateItem,
 }
 
 impl Commander {
-    pub fn new(create_root: CreateRoot, create_section: CreateSection) -> Self {
+    pub fn new(
+        create_root: CreateRoot,
+        create_section: CreateSection,
+        create_item: CreateItem,
+    ) -> Self {
         Self {
             create_root,
             create_section,
+            create_item,
         }
     }
 
@@ -78,7 +85,19 @@ impl Commander {
                 title,
                 description,
                 state,
-            } => todo!(),
+            } => {
+                self.create_item
+                    .execute(create_item::Request {
+                        root,
+                        path,
+                        title,
+                        description,
+                        state,
+                    })
+                    .await?;
+
+                Ok(())
+            }
             Command::UpdateItem {
                 root,
                 path,
@@ -98,6 +117,10 @@ pub trait CommanderExt {
 
 impl CommanderExt for SharedState {
     fn commander(&self) -> Commander {
-        Commander::new(self.create_root_service(), self.create_section_service())
+        Commander::new(
+            self.create_root_service(),
+            self.create_section_service(),
+            self.create_item_service(),
+        )
     }
 }

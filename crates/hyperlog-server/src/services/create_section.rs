@@ -31,6 +31,8 @@ impl CreateSection {
                 .fetch_one(&self.db)
                 .await?;
 
+        // FIXME: implement consistency check on path
+
         let node_id = uuid::Uuid::new_v4();
         sqlx::query(
             r#"

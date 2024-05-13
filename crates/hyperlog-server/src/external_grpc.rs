@@ -25,46 +25,107 @@ impl Server {
 
 #[tonic::async_trait]
 impl Graph for Server {
-    async fn get(
+    async fn create_item(
         &self,
-        request: tonic::Request<GetRequest>,
-    ) -> std::result::Result<tonic::Response<GetReply>, tonic::Status> {
-        let msg = request.get_ref();
+        request: tonic::Request<CreateItemRequest>,
+    ) -> std::result::Result<tonic::Response<CreateItemResponse>, tonic::Status> {
+        let req = request.into_inner();
+        tracing::trace!("create item: req({:?})", req);
 
-        tracing::trace!("get: req({:?})", msg);
+        if req.root.is_empty() {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "root cannot be empty".to_string(),
+            ));
+        }
 
-        Ok(Response::new(GetReply {
-            item: Some(GraphItem {
-                path: "kjuulh".into(),
-                contents: Some(graph_item::Contents::User(UserGraphItem {
-                    items: HashMap::from([(
-                        "some".to_string(),
-                        GraphItem {
-                            path: "some".into(),
-                            contents: Some(graph_item::Contents::Item(ItemGraphItem {
-                                title: "some-title".into(),
-                                description: "some-description".into(),
-                                item_state: Some(item_graph_item::ItemState::NotDone(
-                                    ItemStateNotDone {},
-                                )),
-                            })),
-                        },
-                    )]),
-                })),
-            }),
-        }))
+        if req.path.is_empty() {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "path cannot be empty".to_string(),
+            ));
+        }
+
+        if req
+            .path
+            .iter()
+            .filter(|item| item.is_empty())
+            .collect::<Vec<_>>()
+            .first()
+            .is_some()
+        {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "path cannot contain empty paths".to_string(),
+            ));
+        }
+
+        if req
+            .path
+            .iter()
+            .filter(|item| item.contains("."))
+            .collect::<Vec<_>>()
+            .first()
+            .is_some()
+        {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "path cannot contain `.`".to_string(),
+            ));
+        }
+
+        let item = match req.item {
+            Some(i) => i,
+            None => {
+                return Err(tonic::Status::new(
+                    tonic::Code::InvalidArgument,
+                    "item cannot contain empty or null".to_string(),
+                ));
+            }
+        };
+
+        self.commander
+            .execute(Command::CreateItem {
+                root: req.root,
+                path: req.path,
+                title: item.title,
+                description: item.description,
+                state: match item.item_state {
+                    Some(item_graph_item::ItemState::Done(_)) => {
+                        hyperlog_core::log::ItemState::Done
+                    }
+                    Some(item_graph_item::ItemState::NotDone(_)) => {
+                        hyperlog_core::log::ItemState::NotDone
+                    }
+                    None => hyperlog_core::log::ItemState::default(),
+                },
+            })
+            .await
+            .map_err(to_tonic_err)?;
+
+        Ok(Response::new(CreateItemResponse {}))
     }
 
-    async fn get_available_roots(
+    async fn create_root(
         &self,
-        request: tonic::Request<GetAvailableRootsRequest>,
-    ) -> std::result::Result<tonic::Response<GetAvailableRootsResponse>, tonic::Status> {
+        request: tonic::Request<CreateRootRequest>,
+    ) -> std::result::Result<tonic::Response<CreateRootResponse>, tonic::Status> {
         let req = request.into_inner();
-        tracing::trace!("get available roots: req({:?})", req);
+        tracing::trace!("create root: req({:?})", req);
 
-        Ok(Response::new(GetAvailableRootsResponse {
-            roots: vec!["kjuulh".into()],
-        }))
+        if req.root.is_empty() {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "root cannot be empty".to_string(),
+            ));
+        }
+
+        self.commander
+            .execute(Command::CreateRoot { root: req.root })
+            .await
+            .map_err(to_tonic_err)?;
+
+        Ok(Response::new(CreateRootResponse {}))
     }
 
     async fn create_section(
@@ -127,26 +188,46 @@ impl Graph for Server {
         Ok(Response::new(CreateSectionResponse {}))
     }
 
-    async fn create_root(
+    async fn get(
         &self,
-        request: tonic::Request<CreateRootRequest>,
-    ) -> std::result::Result<tonic::Response<CreateRootResponse>, tonic::Status> {
+        request: tonic::Request<GetRequest>,
+    ) -> std::result::Result<tonic::Response<GetReply>, tonic::Status> {
+        let msg = request.get_ref();
+
+        tracing::trace!("get: req({:?})", msg);
+
+        Ok(Response::new(GetReply {
+            item: Some(GraphItem {
+                path: "kjuulh".into(),
+                contents: Some(graph_item::Contents::User(UserGraphItem {
+                    items: HashMap::from([(
+                        "some".to_string(),
+                        GraphItem {
+                            path: "some".into(),
+                            contents: Some(graph_item::Contents::Item(ItemGraphItem {
+                                title: "some-title".into(),
+                                description: "some-description".into(),
+                                item_state: Some(item_graph_item::ItemState::NotDone(
+                                    ItemStateNotDone {},
+                                )),
+                            })),
+                        },
+                    )]),
+                })),
+            }),
+        }))
+    }
+
+    async fn get_available_roots(
+        &self,
+        request: tonic::Request<GetAvailableRootsRequest>,
+    ) -> std::result::Result<tonic::Response<GetAvailableRootsResponse>, tonic::Status> {
         let req = request.into_inner();
-        tracing::trace!("create root: req({:?})", req);
+        tracing::trace!("get available roots: req({:?})", req);
 
-        if req.root.is_empty() {
-            return Err(tonic::Status::new(
-                tonic::Code::InvalidArgument,
-                "root cannot be empty".to_string(),
-            ));
-        }
-
-        self.commander
-            .execute(Command::CreateRoot { root: req.root })
-            .await
-            .map_err(to_tonic_err)?;
-
-        Ok(Response::new(CreateRootResponse {}))
+        Ok(Response::new(GetAvailableRootsResponse {
+            roots: vec!["kjuulh".into()],
+        }))
     }
 }
 

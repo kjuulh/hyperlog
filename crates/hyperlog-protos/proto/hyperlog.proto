@@ -35,6 +35,7 @@ service Graph {
   // Commands
   rpc CreateSection(CreateSectionRequest) returns (CreateSectionResponse);
   rpc CreateRoot(CreateRootRequest) returns (CreateRootResponse);
+  rpc CreateItem(CreateItemRequest) returns (CreateItemResponse);
   
   // Queriers
   rpc GetAvailableRoots(GetAvailableRootsRequest) returns (GetAvailableRootsResponse);
@@ -53,6 +54,13 @@ message CreateRootRequest {
   string root = 1;
 }
 message CreateRootResponse {}
+
+message CreateItemRequest {
+  string root = 1;
+  repeated string path = 2;
+  ItemGraphItem item = 3;
+}
+message CreateItemResponse {}
 
 // Queries
 message GetAvailableRootsRequest {}

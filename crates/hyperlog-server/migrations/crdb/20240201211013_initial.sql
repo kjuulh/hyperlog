@@ -12,3 +12,6 @@ CREATE TABLE nodes (
     item_type VARCHAR NOT NULL,
     item_content JSONB
 );
+
+CREATE UNIQUE INDEX idx_unique_root_path ON nodes(root_id, path);
+
