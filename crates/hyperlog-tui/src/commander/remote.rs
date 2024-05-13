@@ -20,7 +20,13 @@ impl Commander {
 
         match cmd.clone() {
             Command::CreateRoot { root } => {
-                todo!()
+                let channel = self.channel.clone();
+
+                let mut client = GraphClient::new(channel);
+
+                let request = tonic::Request::new(CreateRootRequest { root });
+                let response = client.create_root(request).await?;
+                let res = response.into_inner();
                 //self.engine.create_root(&root)?;
             }
             Command::CreateSection { root, path } => {
@@ -28,7 +34,7 @@ impl Commander {
 
                 let mut client = GraphClient::new(channel);
 
-                let request = tonic::Request::new(CreateSectionRequest {});
+                let request = tonic::Request::new(CreateSectionRequest { root, path });
                 let response = client.create_section(request).await?;
                 let res = response.into_inner();
 

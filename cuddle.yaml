@@ -19,3 +19,5 @@ please:
 scripts:
   dev:
     type: shell
+  install:
+    type: shell

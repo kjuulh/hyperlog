@@ -15,7 +15,7 @@ impl Deref for SharedState {
 }
 
 pub struct State {
-    pub _db: Pool<Postgres>,
+    pub db: Pool<Postgres>,
 }
 
 impl State {
@@ -32,6 +32,6 @@ impl State {
 
         let _ = sqlx::query("SELECT 1;").fetch_one(&db).await?;
 
-        Ok(Self { _db: db })
+        Ok(Self { db })
     }
 }

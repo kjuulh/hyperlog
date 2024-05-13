@@ -1,5 +1,13 @@
 use hyperlog_core::log::{GraphItem, ItemState};
 
+use crate::{
+    services::{
+        create_root::{self, CreateRoot, CreateRootExt},
+        create_section::{self, CreateSection, CreateSectionExt},
+    },
+    state::SharedState,
+};
+
 #[allow(dead_code)]
 pub enum Command {
     CreateRoot {
@@ -35,14 +43,35 @@ pub enum Command {
 }
 
 #[allow(dead_code)]
-pub struct Commander {}
+pub struct Commander {
+    create_root: CreateRoot,
+    create_section: CreateSection,
+}
 
-#[allow(dead_code, unused_variables)]
 impl Commander {
-    pub fn execute(&self, cmd: Command) -> anyhow::Result<()> {
+    pub fn new(create_root: CreateRoot, create_section: CreateSection) -> Self {
+        Self {
+            create_root,
+            create_section,
+        }
+    }
+
+    pub async fn execute(&self, cmd: Command) -> anyhow::Result<()> {
         match cmd {
-            Command::CreateRoot { root } => todo!(),
-            Command::CreateSection { root, path } => todo!(),
+            Command::CreateRoot { root } => {
+                self.create_root
+                    .execute(create_root::Request { root })
+                    .await?;
+
+                Ok(())
+            }
+            Command::CreateSection { root, path } => {
+                self.create_section
+                    .execute(create_section::Request { root, path })
+                    .await?;
+
+                Ok(())
+            }
             Command::CreateItem {
                 root,
                 path,
@@ -61,38 +90,14 @@ impl Commander {
             Command::Move { root, src, dest } => todo!(),
         }
     }
+}
 
-    pub async fn create_root(&self, root: &str) -> anyhow::Result<()> {
-        todo!()
-    }
+pub trait CommanderExt {
+    fn commander(&self) -> Commander;
+}
 
-    pub async fn create(&self, root: &str, path: &[&str], item: GraphItem) -> anyhow::Result<()> {
-        todo!()
-    }
-
-    pub async fn get(&self, root: &str, path: &[&str]) -> Option<GraphItem> {
-        todo!()
-    }
-
-    pub async fn section_move(
-        &self,
-        root: &str,
-        src_path: &[&str],
-        dest_path: &[&str],
-    ) -> anyhow::Result<()> {
-        todo!()
-    }
-
-    pub async fn delete(&self, root: &str, path: &[&str]) -> anyhow::Result<()> {
-        todo!()
-    }
-
-    pub async fn update_item(
-        &self,
-        root: &str,
-        path: &[&str],
-        item: &GraphItem,
-    ) -> anyhow::Result<()> {
-        todo!()
+impl CommanderExt for SharedState {
+    fn commander(&self) -> Commander {
+        Commander::new(self.create_root_service(), self.create_section_service())
     }
 }

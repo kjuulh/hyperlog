@@ -11,6 +11,8 @@ mod querier;
 
 mod state;
 
+mod services;
+
 #[derive(Clone)]
 pub struct ServeOptions {
     pub external_http: SocketAddr,

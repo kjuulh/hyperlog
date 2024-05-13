@@ -6,6 +6,7 @@ use std::{collections::HashMap, net::SocketAddr};
 use tonic::{transport, Response};
 
 use crate::{
+    commands::{Command, Commander, CommanderExt},
     querier::{Querier, QuerierExt},
     state::SharedState,
 };
@@ -13,11 +14,12 @@ use crate::{
 #[allow(dead_code)]
 pub struct Server {
     querier: Querier,
+    commander: Commander,
 }
 
 impl Server {
-    pub fn new(querier: Querier) -> Self {
-        Self { querier }
+    pub fn new(querier: Querier, commander: Commander) -> Self {
+        Self { querier, commander }
     }
 }
 
@@ -72,8 +74,85 @@ impl Graph for Server {
         let req = request.into_inner();
         tracing::trace!("create section: req({:?})", req);
 
+        if req.root.is_empty() {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "root cannot be empty".to_string(),
+            ));
+        }
+
+        if req.path.is_empty() {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "path cannot be empty".to_string(),
+            ));
+        }
+
+        if req
+            .path
+            .iter()
+            .filter(|item| item.is_empty())
+            .collect::<Vec<_>>()
+            .first()
+            .is_some()
+        {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "path cannot contain empty paths".to_string(),
+            ));
+        }
+
+        if req
+            .path
+            .iter()
+            .filter(|item| item.contains("."))
+            .collect::<Vec<_>>()
+            .first()
+            .is_some()
+        {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "path cannot contain `.`".to_string(),
+            ));
+        }
+
+        self.commander
+            .execute(Command::CreateSection {
+                root: req.root,
+                path: req.path,
+            })
+            .await
+            .map_err(to_tonic_err)?;
+
         Ok(Response::new(CreateSectionResponse {}))
     }
+
+    async fn create_root(
+        &self,
+        request: tonic::Request<CreateRootRequest>,
+    ) -> std::result::Result<tonic::Response<CreateRootResponse>, tonic::Status> {
+        let req = request.into_inner();
+        tracing::trace!("create root: req({:?})", req);
+
+        if req.root.is_empty() {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "root cannot be empty".to_string(),
+            ));
+        }
+
+        self.commander
+            .execute(Command::CreateRoot { root: req.root })
+            .await
+            .map_err(to_tonic_err)?;
+
+        Ok(Response::new(CreateRootResponse {}))
+    }
+}
+
+// TODO: create more defined protobuf categories for errors
+fn to_tonic_err(err: anyhow::Error) -> tonic::Status {
+    tonic::Status::new(tonic::Code::Unknown, err.to_string())
 }
 
 pub trait ServerExt {
@@ -82,7 +161,7 @@ pub trait ServerExt {
 
 impl ServerExt for SharedState {
     fn grpc_server(&self) -> Server {
-        Server::new(self.querier())
+        Server::new(self.querier(), self.commander())
     }
 }
 

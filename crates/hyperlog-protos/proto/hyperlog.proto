@@ -32,11 +32,29 @@ message GraphItem {
 }
 
 service Graph {
+  // Commands
+  rpc CreateSection(CreateSectionRequest) returns (CreateSectionResponse);
+  rpc CreateRoot(CreateRootRequest) returns (CreateRootResponse);
+  
+  // Queriers
   rpc GetAvailableRoots(GetAvailableRootsRequest) returns (GetAvailableRootsResponse);
   rpc Get(GetRequest) returns (GetReply);
-  rpc CreateSection(CreateSectionRequest) returns (CreateSectionResponse);
+
 }
 
+// Commands
+message CreateSectionRequest {
+  string root = 1;
+  repeated string path = 2;
+}
+message CreateSectionResponse {}
+
+message CreateRootRequest {
+  string root = 1;
+}
+message CreateRootResponse {}
+
+// Queries
 message GetAvailableRootsRequest {}
 message GetAvailableRootsResponse {
   repeated string roots = 1;
@@ -50,8 +68,3 @@ message GetRequest {
 message GetReply {
   GraphItem item = 1;
 }
-
-
-message CreateSectionRequest {}
-message CreateSectionResponse {}
-
