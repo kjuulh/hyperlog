@@ -225,9 +225,22 @@ impl Graph for Server {
         let req = request.into_inner();
         tracing::trace!("get available roots: req({:?})", req);
 
-        Ok(Response::new(GetAvailableRootsResponse {
-            roots: vec!["kjuulh".into()],
-        }))
+        let roots = match self
+            .querier
+            .get_available_roots()
+            .await
+            .map_err(to_tonic_err)?
+        {
+            Some(roots) => roots,
+            None => {
+                return Err(tonic::Status::new(
+                    tonic::Code::NotFound,
+                    "failed to find any valid roots",
+                ))
+            }
+        };
+
+        Ok(Response::new(GetAvailableRootsResponse { roots }))
     }
 }
 
