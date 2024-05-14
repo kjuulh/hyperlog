@@ -104,7 +104,28 @@ impl Commander {
                 description,
                 state,
             } => {
-                todo!()
+                let channel = self.channel.clone();
+
+                let mut client = GraphClient::new(channel);
+
+                let request = tonic::Request::new(UpdateItemRequest {
+                    root,
+                    path,
+                    item: Some(ItemGraphItem {
+                        title,
+                        description,
+                        item_state: Some(match state {
+                            hyperlog_core::log::ItemState::NotDone => {
+                                item_graph_item::ItemState::NotDone(ItemStateNotDone {})
+                            }
+                            hyperlog_core::log::ItemState::Done => {
+                                item_graph_item::ItemState::Done(ItemStateDone {})
+                            }
+                        }),
+                    }),
+                });
+                let response = client.update_item(request).await?;
+                let res = response.into_inner();
                 // self.engine.update_item(
                 //             &root,
                 //             &path.iter().map(|p| p.as_str()).collect::<Vec<_>>(),

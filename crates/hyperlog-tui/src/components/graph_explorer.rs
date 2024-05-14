@@ -7,8 +7,8 @@ use crate::{
     command_parser::Commands,
     commands::{
         batch::BatchCommand, create_section::CreateSectionCommandExt,
-        toggle_item::ToggleItemCommandExt, update_graph::UpdateGraphCommandExt, Command,
-        IntoCommand,
+        open_update_item_dialog::OpenUpdateItemDialogCommandExt, toggle_item::ToggleItemCommandExt,
+        update_graph::UpdateGraphCommandExt, Command, IntoCommand,
     },
     components::movement_graph::GraphItemType,
     models::{IOEvent, Msg},
@@ -272,13 +272,11 @@ impl<'a> GraphExplorer<'a> {
                             todo!("cannot edit section at the moment")
                         }
                         GraphItemType::Item { .. } => {
-                            if let Some(item) = self.state.querier.get(&self.inner.root, path) {
-                                if let GraphItem::Item { .. } = item {
-                                    return Ok(Some(
-                                        Msg::OpenEditItemDialog { item }.into_command(),
-                                    ));
-                                }
-                            }
+                            batch.with(
+                                self.state
+                                    .open_update_item_dialog_command()
+                                    .command(&self.inner.root, path),
+                            );
                         }
                     }
                 }

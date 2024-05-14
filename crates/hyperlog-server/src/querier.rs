@@ -1,18 +1,23 @@
 use hyperlog_core::log::GraphItem;
 
 use crate::{
-    services::get_available_roots::{self, GetAvailableRoots, GetAvailableRootsExt},
+    services::{
+        get_available_roots::{self, GetAvailableRoots, GetAvailableRootsExt},
+        get_graph::{GetGraph, GetGraphExt},
+    },
     state::SharedState,
 };
 
 pub struct Querier {
     get_available_roots: GetAvailableRoots,
+    get_graph: GetGraph,
 }
 
 impl Querier {
-    pub fn new(get_available_roots: GetAvailableRoots) -> Self {
+    pub fn new(get_available_roots: GetAvailableRoots, get_graph: GetGraph) -> Self {
         Self {
             get_available_roots,
+            get_graph,
         }
     }
 
@@ -29,12 +34,20 @@ impl Querier {
         Ok(Some(res.roots))
     }
 
-    pub fn get(
+    pub async fn get(
         &self,
         root: &str,
         path: impl IntoIterator<Item = impl Into<String>>,
-    ) -> Option<GraphItem> {
-        todo!()
+    ) -> anyhow::Result<Option<GraphItem>> {
+        let graph = self
+            .get_graph
+            .execute(crate::services::get_graph::Request {
+                root: root.into(),
+                path: path.into_iter().map(|s| s.into()).collect(),
+            })
+            .await?;
+
+        Ok(Some(graph.item))
     }
 }
 
@@ -44,6 +57,6 @@ pub trait QuerierExt {
 
 impl QuerierExt for SharedState {
     fn querier(&self) -> Querier {
-        Querier::new(self.get_available_roots_service())
+        Querier::new(self.get_available_roots_service(), self.get_graph_service())
     }
 }

@@ -196,26 +196,23 @@ impl Graph for Server {
 
         tracing::trace!("get: req({:?})", msg);
 
-        Ok(Response::new(GetReply {
-            item: Some(GraphItem {
-                path: "kjuulh".into(),
-                contents: Some(graph_item::Contents::User(UserGraphItem {
-                    items: HashMap::from([(
-                        "some".to_string(),
-                        GraphItem {
-                            path: "some".into(),
-                            contents: Some(graph_item::Contents::Item(ItemGraphItem {
-                                title: "some-title".into(),
-                                description: "some-description".into(),
-                                item_state: Some(item_graph_item::ItemState::NotDone(
-                                    ItemStateNotDone {},
-                                )),
-                            })),
-                        },
-                    )]),
-                })),
-            }),
-        }))
+        let res = self
+            .querier
+            .get(&msg.root, msg.paths.clone())
+            .await
+            .map_err(to_tonic_err)?;
+
+        match res {
+            Some(item) => Ok(Response::new(GetReply {
+                item: Some(to_native(&item).map_err(to_tonic_err)?),
+            })),
+            None => {
+                return Err(tonic::Status::new(
+                    tonic::Code::NotFound,
+                    "failed to find any valid roots",
+                ))
+            }
+        }
     }
 
     async fn get_available_roots(
@@ -241,6 +238,130 @@ impl Graph for Server {
         };
 
         Ok(Response::new(GetAvailableRootsResponse { roots }))
+    }
+
+    async fn update_item(
+        &self,
+        request: tonic::Request<UpdateItemRequest>,
+    ) -> std::result::Result<tonic::Response<UpdateItemResponse>, tonic::Status> {
+        let req = request.into_inner();
+        tracing::trace!("update item: req({:?})", req);
+
+        if req.root.is_empty() {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "root cannot be empty".to_string(),
+            ));
+        }
+
+        if req.path.is_empty() {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "path cannot be empty".to_string(),
+            ));
+        }
+
+        if req
+            .path
+            .iter()
+            .filter(|item| item.is_empty())
+            .collect::<Vec<_>>()
+            .first()
+            .is_some()
+        {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "path cannot contain empty paths".to_string(),
+            ));
+        }
+
+        if req
+            .path
+            .iter()
+            .filter(|item| item.contains("."))
+            .collect::<Vec<_>>()
+            .first()
+            .is_some()
+        {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "path cannot contain `.`".to_string(),
+            ));
+        }
+
+        let item = match req.item {
+            Some(i) => i,
+            None => {
+                return Err(tonic::Status::new(
+                    tonic::Code::InvalidArgument,
+                    "item cannot contain empty or null".to_string(),
+                ));
+            }
+        };
+
+        self.commander
+            .execute(Command::UpdateItem {
+                root: req.root,
+                path: req.path,
+                title: item.title,
+                description: item.description,
+                state: match item.item_state {
+                    Some(item_graph_item::ItemState::Done(_)) => {
+                        hyperlog_core::log::ItemState::Done
+                    }
+                    Some(item_graph_item::ItemState::NotDone(_)) => {
+                        hyperlog_core::log::ItemState::NotDone
+                    }
+                    None => hyperlog_core::log::ItemState::default(),
+                },
+            })
+            .await
+            .map_err(to_tonic_err)?;
+
+        Ok(Response::new(UpdateItemResponse {}))
+    }
+}
+
+fn to_native(from: &hyperlog_core::log::GraphItem) -> anyhow::Result<GraphItem> {
+    match from {
+        hyperlog_core::log::GraphItem::User(section)
+        | hyperlog_core::log::GraphItem::Section(section) => {
+            let mut root = HashMap::new();
+            for (key, value) in section.iter() {
+                root.insert(key.to_string(), to_native(value)?);
+            }
+            match from {
+                hyperlog_core::log::GraphItem::User(_) => Ok(GraphItem {
+                    contents: Some(graph_item::Contents::User(UserGraphItem { items: root })),
+                }),
+                hyperlog_core::log::GraphItem::Section(_) => Ok(GraphItem {
+                    contents: Some(graph_item::Contents::Section(SectionGraphItem {
+                        items: root,
+                    })),
+                }),
+                _ => {
+                    todo!()
+                }
+            }
+        }
+        hyperlog_core::log::GraphItem::Item {
+            title,
+            description,
+            state,
+        } => Ok(GraphItem {
+            contents: Some(graph_item::Contents::Item(ItemGraphItem {
+                title: title.to_owned(),
+                description: description.to_owned(),
+                item_state: Some(match state {
+                    hyperlog_core::log::ItemState::NotDone => {
+                        item_graph_item::ItemState::NotDone(ItemStateNotDone {})
+                    }
+                    hyperlog_core::log::ItemState::Done => {
+                        item_graph_item::ItemState::Done(ItemStateDone {})
+                    }
+                }),
+            })),
+        }),
     }
 }
 

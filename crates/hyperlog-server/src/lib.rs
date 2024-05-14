@@ -1,3 +1,5 @@
+#![feature(map_try_insert)]
+
 use std::{net::SocketAddr, sync::Arc};
 
 use crate::state::{SharedState, State};

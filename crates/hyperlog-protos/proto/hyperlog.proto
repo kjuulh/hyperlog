@@ -23,11 +23,10 @@ message ItemGraphItem {
 }
 
 message GraphItem {
-  string path = 1;
   oneof contents {
-    UserGraphItem user = 2;
-    SectionGraphItem section = 3;
-    ItemGraphItem item = 4;
+    UserGraphItem user = 1;
+    SectionGraphItem section = 2;
+    ItemGraphItem item = 3;
   }
 }
 
@@ -36,6 +35,7 @@ service Graph {
   rpc CreateSection(CreateSectionRequest) returns (CreateSectionResponse);
   rpc CreateRoot(CreateRootRequest) returns (CreateRootResponse);
   rpc CreateItem(CreateItemRequest) returns (CreateItemResponse);
+  rpc UpdateItem(UpdateItemRequest) returns (UpdateItemResponse);
   
   // Queriers
   rpc GetAvailableRoots(GetAvailableRootsRequest) returns (GetAvailableRootsResponse);
@@ -61,6 +61,13 @@ message CreateItemRequest {
   ItemGraphItem item = 3;
 }
 message CreateItemResponse {}
+
+message UpdateItemRequest {
+  string root = 1;
+  repeated string path = 2;
+  ItemGraphItem item = 3;
+}
+message UpdateItemResponse {}
 
 // Queries
 message GetAvailableRootsRequest {}

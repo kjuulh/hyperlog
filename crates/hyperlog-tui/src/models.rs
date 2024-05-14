@@ -26,6 +26,8 @@ pub enum Msg {
     ItemUpdated(IOEvent<()>),
     SectionCreated(IOEvent<()>),
     ItemToggled(IOEvent<()>),
+
+    OpenUpdateItemDialog(IOEvent<()>),
 }
 
 #[derive(Debug)]
