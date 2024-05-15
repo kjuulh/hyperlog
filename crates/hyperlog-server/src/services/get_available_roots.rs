@@ -20,7 +20,7 @@ impl GetAvailableRoots {
         Self { db }
     }
 
-    pub async fn execute(&self, req: Request) -> anyhow::Result<Response> {
+    pub async fn execute(&self, _req: Request) -> anyhow::Result<Response> {
         let roots: Vec<Root> = sqlx::query_as(
             r#"
     SELECT

@@ -132,7 +132,7 @@ impl Commander {
 
                 Ok(())
             }
-            Command::Move { root, src, dest } => todo!(),
+            Command::Move { .. } => todo!(),
         }
     }
 }

@@ -35,7 +35,6 @@ struct Item {
 
 #[derive(sqlx::FromRow, Debug)]
 struct Node {
-    id: uuid::Uuid,
     path: String,
     item_type: String,
     item_content: Option<Json<serde_json::Value>>,
@@ -152,12 +151,14 @@ mod engine {
     }
 
     impl Engine {
+        #[allow(dead_code)]
         pub fn engine_from_str(input: &str) -> anyhow::Result<Self> {
             let graph: Graph = serde_json::from_str(input)?;
 
             Ok(Self { graph })
         }
 
+        #[allow(dead_code)]
         pub fn to_str(&self) -> anyhow::Result<String> {
             serde_json::to_string_pretty(&self.graph).context("failed to serialize graph")
         }
@@ -219,18 +220,21 @@ mod engine {
             root.get(path)
         }
 
+        #[allow(dead_code)]
         pub fn get_mut(&mut self, root: &str, path: &[&str]) -> Option<&mut GraphItem> {
             let root = self.graph.get_mut(root)?;
 
             root.get_mut(path)
         }
 
+        #[allow(dead_code)]
         pub fn take(&mut self, root: &str, path: &[&str]) -> Option<GraphItem> {
             let root = self.graph.get_mut(root)?;
 
             root.take(path)
         }
 
+        #[allow(dead_code)]
         pub fn section_move(
             &mut self,
             root: &str,
@@ -268,12 +272,14 @@ mod engine {
             Ok(())
         }
 
+        #[allow(dead_code)]
         pub fn delete(&mut self, root: &str, path: &[&str]) -> anyhow::Result<()> {
             self.take(root, path)
                 .map(|_| ())
                 .ok_or(anyhow!("item was not found"))
         }
 
+        #[allow(dead_code)]
         pub fn toggle_item(&mut self, root: &str, path: &[&str]) -> anyhow::Result<()> {
             if let Some(item) = self.get_mut(root, path) {
                 match item {
@@ -290,6 +296,7 @@ mod engine {
             Ok(())
         }
 
+        #[allow(dead_code)]
         pub fn update_item(
             &mut self,
             root: &str,
@@ -341,6 +348,7 @@ mod engine {
             Ok(())
         }
 
+        #[allow(dead_code)]
         pub fn get_roots(&self) -> Option<Vec<String>> {
             let items = self.graph.keys().cloned().collect::<Vec<_>>();
             if items.is_empty() {

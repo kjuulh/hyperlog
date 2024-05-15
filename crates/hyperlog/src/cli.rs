@@ -1,3 +1,5 @@
+use std::net::SocketAddr;
+
 use clap::{Parser, Subcommand, ValueEnum};
 use hyperlog_tui::{
     commander,

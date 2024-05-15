@@ -28,13 +28,10 @@ struct ItemContent {
 #[derive(sqlx::FromRow)]
 struct Root {
     id: uuid::Uuid,
-    root_name: String,
 }
 
 #[derive(sqlx::FromRow)]
-struct Section {
-    id: uuid::Uuid,
-}
+struct Section {}
 
 impl CreateItem {
     pub fn new(db: sqlx::PgPool) -> Self {

@@ -14,7 +14,6 @@ pub struct Response {}
 #[derive(sqlx::FromRow)]
 struct Root {
     id: uuid::Uuid,
-    root_name: String,
 }
 
 impl CreateSection {
