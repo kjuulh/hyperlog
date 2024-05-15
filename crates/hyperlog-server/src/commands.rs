@@ -5,6 +5,7 @@ use crate::{
         create_item::{self, CreateItem, CreateItemExt},
         create_root::{self, CreateRoot, CreateRootExt},
         create_section::{self, CreateSection, CreateSectionExt},
+        toggle_item::{ToggleItem, ToggleItemExt},
         update_item::{UpdateItem, UpdateItemExt},
     },
     state::SharedState,
@@ -50,6 +51,7 @@ pub struct Commander {
     create_section: CreateSection,
     create_item: CreateItem,
     update_item: UpdateItem,
+    toggle_item: ToggleItem,
 }
 
 impl Commander {
@@ -58,12 +60,14 @@ impl Commander {
         create_section: CreateSection,
         create_item: CreateItem,
         update_item: UpdateItem,
+        toggle_item: ToggleItem,
     ) -> Self {
         Self {
             create_root,
             create_section,
             create_item,
             update_item,
+            toggle_item,
         }
     }
 
@@ -121,7 +125,13 @@ impl Commander {
 
                 Ok(())
             }
-            Command::ToggleItem { root, path } => todo!(),
+            Command::ToggleItem { root, path } => {
+                self.toggle_item
+                    .execute(crate::services::toggle_item::Request { root, path })
+                    .await?;
+
+                Ok(())
+            }
             Command::Move { root, src, dest } => todo!(),
         }
     }
@@ -138,6 +148,7 @@ impl CommanderExt for SharedState {
             self.create_section_service(),
             self.create_item_service(),
             self.update_item_service(),
+            self.toggle_item_service(),
         )
     }
 }

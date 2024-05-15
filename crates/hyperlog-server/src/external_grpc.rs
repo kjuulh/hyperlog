@@ -320,6 +320,66 @@ impl Graph for Server {
 
         Ok(Response::new(UpdateItemResponse {}))
     }
+
+    async fn toggle_item(
+        &self,
+        request: tonic::Request<ToggleItemRequest>,
+    ) -> std::result::Result<tonic::Response<ToggleItemResponse>, tonic::Status> {
+        let req = request.into_inner();
+        tracing::trace!("update item: req({:?})", req);
+
+        if req.root.is_empty() {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "root cannot be empty".to_string(),
+            ));
+        }
+
+        if req.path.is_empty() {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "path cannot be empty".to_string(),
+            ));
+        }
+
+        if req
+            .path
+            .iter()
+            .filter(|item| item.is_empty())
+            .collect::<Vec<_>>()
+            .first()
+            .is_some()
+        {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "path cannot contain empty paths".to_string(),
+            ));
+        }
+
+        if req
+            .path
+            .iter()
+            .filter(|item| item.contains("."))
+            .collect::<Vec<_>>()
+            .first()
+            .is_some()
+        {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "path cannot contain `.`".to_string(),
+            ));
+        }
+
+        self.commander
+            .execute(Command::ToggleItem {
+                root: req.root,
+                path: req.path,
+            })
+            .await
+            .map_err(to_tonic_err)?;
+
+        Ok(Response::new(ToggleItemResponse {}))
+    }
 }
 
 fn to_native(from: &hyperlog_core::log::GraphItem) -> anyhow::Result<GraphItem> {

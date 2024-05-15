@@ -36,6 +36,7 @@ service Graph {
   rpc CreateRoot(CreateRootRequest) returns (CreateRootResponse);
   rpc CreateItem(CreateItemRequest) returns (CreateItemResponse);
   rpc UpdateItem(UpdateItemRequest) returns (UpdateItemResponse);
+  rpc ToggleItem(ToggleItemRequest) returns (ToggleItemResponse);
   
   // Queriers
   rpc GetAvailableRoots(GetAvailableRootsRequest) returns (GetAvailableRootsResponse);
@@ -68,6 +69,12 @@ message UpdateItemRequest {
   ItemGraphItem item = 3;
 }
 message UpdateItemResponse {}
+
+message ToggleItemRequest {
+  string root = 1;
+  repeated string path = 2;
+}
+message ToggleItemResponse {}
 
 // Queries
 message GetAvailableRootsRequest {}

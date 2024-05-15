@@ -92,10 +92,13 @@ impl Commander {
                 //         )?
             }
             Command::ToggleItem { root, path } => {
-                todo!()
-                // self
-                //             .engine
-                //             .toggle_item(&root, &path.iter().map(|p| p.as_str()).collect::<Vec<_>>())?
+                let channel = self.channel.clone();
+
+                let mut client = GraphClient::new(channel);
+
+                let request = tonic::Request::new(ToggleItemRequest { root, path });
+                let response = client.toggle_item(request).await?;
+                let res = response.into_inner();
             }
             Command::UpdateItem {
                 root,
