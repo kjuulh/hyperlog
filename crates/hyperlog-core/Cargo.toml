@@ -12,7 +12,7 @@ clap.workspace = true
 dotenv.workspace = true
 axum.workspace = true
 
-serde = { version = "1.0.201", features = ["derive"] }
+serde = { version = "1.0.202", features = ["derive"] }
 uuid = { version = "1.8.0", features = ["v4"] }
 serde_json = "1.0.117"
 
