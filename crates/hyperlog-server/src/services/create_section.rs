@@ -1,5 +1,3 @@
-use hyperlog_core::log::GraphItem;
-
 use crate::state::SharedState;
 
 #[derive(Clone)]

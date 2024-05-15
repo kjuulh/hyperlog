@@ -1,4 +1,4 @@
-use hyperlog_core::log::{GraphItem, ItemState};
+use hyperlog_core::log::ItemState;
 use sqlx::types::Json;
 
 use crate::state::SharedState;
