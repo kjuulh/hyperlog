@@ -1,5 +1,3 @@
-use std::net::SocketAddr;
-
 use clap::{Parser, Subcommand, ValueEnum};
 use hyperlog_tui::{
     commander,
@@ -36,11 +34,11 @@ enum Commands {
     #[cfg(feature = "include_server")]
     Serve {
         #[arg(env = "EXTERNAL_HOST", long, default_value = "127.0.0.1:3000")]
-        external_host: SocketAddr,
+        external_host: std::net::SocketAddr,
         #[arg(env = "INTERNAL_HOST", long, default_value = "127.0.0.1:3001")]
-        internal_host: SocketAddr,
+        internal_host: std::net::SocketAddr,
         #[arg(env = "EXTERNAL_GRPC_HOST", long, default_value = "127.0.0.1:4000")]
-        external_grpc_host: SocketAddr,
+        external_grpc_host: std::net::SocketAddr,
     },
     Exec {
         #[command(subcommand)]
