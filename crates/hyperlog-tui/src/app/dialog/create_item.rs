@@ -80,7 +80,7 @@ impl CreateItemState {
 
         if !title.is_empty() {
             let mut path = self.path.clone();
-            path.push(title.replace([' ', '.'], "-"));
+            path.push(title.replace(['.'], "-"));
 
             Some(self.state.create_item_command().command(
                 &self.root,
