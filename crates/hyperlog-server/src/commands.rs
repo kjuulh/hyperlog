@@ -5,8 +5,8 @@ use crate::{
         create_item::{self, CreateItem, CreateItemExt},
         create_root::{self, CreateRoot, CreateRootExt},
         create_section::{self, CreateSection, CreateSectionExt},
-        toggle_item::{ToggleItem, ToggleItemExt},
-        update_item::{UpdateItem, UpdateItemExt},
+        toggle_item::{self, ToggleItem, ToggleItemExt},
+        update_item::{self, UpdateItem, UpdateItemExt},
     },
     state::SharedState,
 };
@@ -114,7 +114,7 @@ impl Commander {
                 state,
             } => {
                 self.update_item
-                    .execute(crate::services::update_item::Request {
+                    .execute(update_item::Request {
                         root,
                         path,
                         title,
@@ -127,7 +127,7 @@ impl Commander {
             }
             Command::ToggleItem { root, path } => {
                 self.toggle_item
-                    .execute(crate::services::toggle_item::Request { root, path })
+                    .execute(toggle_item::Request { root, path })
                     .await?;
 
                 Ok(())
