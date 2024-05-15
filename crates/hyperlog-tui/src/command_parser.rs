@@ -6,6 +6,7 @@ pub enum Commands {
     WriteQuit,
     Archive,
     CreateSection { name: String },
+    CreateItem { name: String },
     Edit,
 
     ShowAll,
@@ -39,6 +40,9 @@ impl CommandParser {
                 "a" | "archive" => Some(Commands::Archive),
                 "cs" | "create-section" => rest.first().map(|name| Commands::CreateSection {
                     name: name.to_string(),
+                }),
+                "ci" | "create-item" => Some(Commands::CreateItem {
+                    name: rest.join(" ").to_string(),
                 }),
                 "e" | "edit" => Some(Commands::Edit),
                 "show-all" => Some(Commands::ShowAll),

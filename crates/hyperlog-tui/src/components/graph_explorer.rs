@@ -6,7 +6,8 @@ use ratatui::{prelude::*, widgets::*};
 use crate::{
     command_parser::Commands,
     commands::{
-        batch::BatchCommand, create_section::CreateSectionCommandExt,
+        batch::BatchCommand, create_item::CreateItemCommandExt,
+        create_section::CreateSectionCommandExt,
         open_update_item_dialog::OpenUpdateItemDialogCommandExt, toggle_item::ToggleItemCommandExt,
         update_graph::UpdateGraphCommandExt, Command, IntoCommand,
     },
@@ -241,7 +242,7 @@ impl<'a> GraphExplorer<'a> {
             Commands::CreateSection { name } => {
                 if !name.is_empty() {
                     let mut path = self.get_current_path();
-                    path.push(name.replace(" ", "-").replace(".", "-"));
+                    path.push(name.replace(".", "-"));
 
                     // self.state
                     //     .commander
@@ -253,6 +254,21 @@ impl<'a> GraphExplorer<'a> {
                     let cmd = self.state.create_section_command().command(
                         &self.inner.root,
                         &path.iter().map(|i| i.as_str()).collect_vec(),
+                    );
+
+                    batch.with(cmd.into_command());
+                }
+            }
+            Commands::CreateItem { name } => {
+                if !name.is_empty() {
+                    let mut path = self.get_current_path();
+                    path.push(name.replace(".", " "));
+                    let cmd = self.state.create_item_command().command(
+                        &self.inner.root,
+                        &path.iter().map(|i| i.as_str()).collect_vec(),
+                        name,
+                        "",
+                        &hyperlog_core::log::ItemState::default(),
                     );
 
                     batch.with(cmd.into_command());
