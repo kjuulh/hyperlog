@@ -17,7 +17,7 @@ dotenv = { version = "0.15" }
 axum = { version = "0.7" }
 serde = { version = "1.0.202", features = ["derive"] }
 serde_json = "1.0.117"
-itertools = "0.12.1"
+itertools = "0.13.0"
 uuid = { version = "1.8.0", features = ["v4"] }
 tonic = "0.11.0"
 futures = { version = "0.3.30" }
