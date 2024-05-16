@@ -125,6 +125,11 @@ async fn update<'a>(
                                 app.update(Msg::OpenCreateItemDialog)?;
                                 app.update(Msg::EnterInsertMode)?
                             }
+                            KeyCode::Char('o') => {
+                                // TODO: batch commands
+                                app.update(Msg::OpenCreateItemDialogBelow)?;
+                                app.update(Msg::EnterInsertMode)?
+                            }
                             KeyCode::Char('i') => app.update(Msg::EnterInsertMode)?,
                             KeyCode::Char(':') => app.update(Msg::EnterCommandMode)?,
                             _ => return Ok(UpdateConclusion(false)),

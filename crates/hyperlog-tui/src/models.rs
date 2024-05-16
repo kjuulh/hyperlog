@@ -10,6 +10,7 @@ pub enum Msg {
     MoveUp,
     QuitApp,
     OpenCreateItemDialog,
+    OpenCreateItemDialogBelow,
     OpenEditItemDialog { item: GraphItem },
     Interact,
 

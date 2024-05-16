@@ -7,6 +7,7 @@ pub enum Commands {
     Archive,
     CreateSection { name: String },
     CreateItem { name: String },
+    CreateBelow { name: String },
     Edit,
 
     ShowAll,
@@ -42,6 +43,9 @@ impl CommandParser {
                     name: name.to_string(),
                 }),
                 "ci" | "create-item" => Some(Commands::CreateItem {
+                    name: rest.join(" ").to_string(),
+                }),
+                "cb" | "create-below" => Some(Commands::CreateBelow {
                     name: rest.join(" ").to_string(),
                 }),
                 "e" | "edit" => Some(Commands::Edit),

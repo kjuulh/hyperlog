@@ -100,6 +100,7 @@ impl<'a> App<'a> {
             Msg::MoveDown => self.graph_explorer.move_down()?,
             Msg::MoveUp => self.graph_explorer.move_up()?,
             Msg::OpenCreateItemDialog => self.open_dialog(),
+            Msg::OpenCreateItemDialogBelow => self.open_dialog_below(),
             Msg::OpenEditItemDialog { item } => self.open_edit_item_dialog(item),
             Msg::EnterInsertMode => self.mode = Mode::Insert,
             Msg::EnterViewMode => self.mode = Mode::View,
@@ -178,6 +179,22 @@ impl<'a> App<'a> {
             self.dialog = Some(Dialog::CreateItem {
                 state: CreateItemState::new(&self.state, root, path),
             });
+        }
+    }
+
+    fn open_dialog_below(&mut self) {
+        if self.dialog.is_none() {
+            let root = self.root.clone();
+            let path = self.graph_explorer.get_current_path();
+
+            if let Some((_, rest)) = path.split_last() {
+                let path = rest.to_vec();
+
+                self.focus = AppFocus::Dialog;
+                self.dialog = Some(Dialog::CreateItem {
+                    state: CreateItemState::new(&self.state, root, path),
+                });
+            }
         }
     }
 

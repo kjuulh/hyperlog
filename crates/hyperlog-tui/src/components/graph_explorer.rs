@@ -274,6 +274,25 @@ impl<'a> GraphExplorer<'a> {
                     batch.with(cmd.into_command());
                 }
             }
+            Commands::CreateBelow { name } => {
+                if !name.is_empty() {
+                    let path = self.get_current_path();
+                    if let Some((_, path)) = path.split_last() {
+                        let mut path = path.to_vec();
+                        path.push(name.replace(".", " "));
+
+                        let cmd = self.state.create_item_command().command(
+                            &self.inner.root,
+                            &path.iter().map(|i| i.as_str()).collect_vec(),
+                            name,
+                            "",
+                            &hyperlog_core::log::ItemState::default(),
+                        );
+
+                        batch.with(cmd.into_command());
+                    }
+                }
+            }
             Commands::Edit => {
                 if let Some(item) = self.get_current_item() {
                     let path = self.get_current_path();
