@@ -18,13 +18,13 @@ cuddle/clusters:
     env:
       external.host: "0.0.0.0:3000"
       internal.host: "0.0.0.0:3001"
-      external.grpc.host: "0.0.0.0:1000"
+      external.grpc.host: "0.0.0.0:4000"
       rust.log: hyperlog=trace
   prod:
     env:
       external.host: "0.0.0.0:3000"
       internal.host: "0.0.0.0:3001"
-      external.grpc.host: "0.0.0.0:1000"
+      external.grpc.host: "0.0.0.0:4000"
       rust.log: hyperlog=trace
 
 please:
