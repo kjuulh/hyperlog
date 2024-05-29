@@ -12,6 +12,8 @@ vars:
   ingress:
     - external: "true"
     - internal: "true"
+    - external_grpc: "true"
+    - internal_grpc: "true"
 
 cuddle/clusters:
   dev:
