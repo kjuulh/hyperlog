@@ -28,5 +28,5 @@ similar-asserts = "1.5.0"
 tempfile = "3.10.1"
 
 [features]
-default = []
+default = ["include_server"]
 include_server = ["dep:hyperlog-server"]
