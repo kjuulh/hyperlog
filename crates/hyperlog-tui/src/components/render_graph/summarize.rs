@@ -4,6 +4,7 @@ use ratatui::prelude::*;
 
 const GREEN: Color = Color::Rgb(127, 255, 0);
 const ORANGE: Color = Color::Rgb(255, 165, 0);
+const PURPLE: Color = Color::Rgb(138, 43, 226);
 
 pub trait Summarize {
     fn heading(&self) -> Vec<Span>;
@@ -21,20 +22,20 @@ impl Summarize for MovementGraphItem {
 
                 vec![
                     name,
-                    Span::from(" ~ "),
-                    Span::from(format!("(items: {})", items)),
+                    Span::from(" ~ ").fg(PURPLE),
+                    Span::from(format!("(items: {})", items)).fg(Color::DarkGray),
                 ]
             }
             GraphItemType::Item { done } => {
                 if done {
                     vec![
-                        Span::from("["),
+                        Span::from("[").fg(Color::DarkGray),
                         Span::from("x").fg(GREEN),
-                        Span::from("] "),
+                        Span::from("] ").fg(Color::DarkGray),
                         name,
                     ]
                 } else {
-                    vec![Span::from("[ ] "), name]
+                    vec![Span::from("[ ] ").fg(Color::DarkGray), name]
                 }
             }
         }
