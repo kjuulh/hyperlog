@@ -1,4 +1,4 @@
-use tonic::transport::Channel;
+use tonic::transport::{Channel, ClientTlsConfig};
 
 use crate::{
     commander::Commander, events::Events, querier::Querier, shared_engine::SharedEngine,
@@ -17,7 +17,7 @@ pub struct State {
 
 pub enum Backend {
     Local,
-    Remote,
+    Remote { url: String },
 }
 
 impl State {
@@ -32,8 +32,9 @@ impl State {
                 Querier::local(&engine),
                 Commander::local(engine.clone(), storage.clone(), events.clone())?,
             ),
-            Backend::Remote => {
-                let channel = Channel::from_static("http://localhost:4000")
+            Backend::Remote { url } => {
+                let channel = Channel::from_shared(url)?
+                    .tls_config(ClientTlsConfig::new())?
                     .connect()
                     .await?;
 

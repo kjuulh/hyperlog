@@ -12,21 +12,15 @@ struct Command {
 
     #[arg(long, default_value = "local")]
     backend: BackendArg,
+
+    #[arg(long = "backend-url", required_if_eq("backend", "remote"))]
+    backend_url: Option<String>,
 }
 
 #[derive(ValueEnum, Clone)]
 enum BackendArg {
     Local,
     Remote,
-}
-
-impl From<BackendArg> for Backend {
-    fn from(value: BackendArg) -> Self {
-        match value {
-            BackendArg::Local => Backend::Local,
-            BackendArg::Remote => Backend::Remote,
-        }
-    }
 }
 
 #[derive(Subcommand)]
@@ -93,6 +87,14 @@ pub async fn execute() -> anyhow::Result<()> {
     }
 
     let backend = cli.backend;
+    let backend_url = cli.backend_url;
+
+    let backend = match backend {
+        BackendArg::Local => Backend::Local,
+        BackendArg::Remote => Backend::Remote {
+            url: backend_url.expect("backend-url to be set"),
+        },
+    };
 
     match cli.command {
         #[cfg(feature = "include_server")]
@@ -111,7 +113,7 @@ pub async fn execute() -> anyhow::Result<()> {
             .await?;
         }
         Some(Commands::Exec { commands }) => {
-            let state = State::new(backend.into()).await?;
+            let state = State::new(backend).await?;
             match commands {
                 ExecCommands::CreateRoot { root } => {
                     state
@@ -136,7 +138,7 @@ pub async fn execute() -> anyhow::Result<()> {
             }
         }
         Some(Commands::Query { commands }) => {
-            let state = State::new(backend.into()).await?;
+            let state = State::new(backend).await?;
             match commands {
                 QueryCommands::Get { root, path } => {
                     let res = state.querier.get(
@@ -153,7 +155,7 @@ pub async fn execute() -> anyhow::Result<()> {
             }
         }
         Some(Commands::CreateRoot { name }) => {
-            let state = State::new(backend.into()).await?;
+            let state = State::new(backend).await?;
             state
                 .commander
                 .execute(commander::Command::CreateRoot { root: name })
@@ -161,16 +163,16 @@ pub async fn execute() -> anyhow::Result<()> {
             println!("Root was successfully created, now run:\n\n$ hyperlog");
         }
         Some(Commands::Info {}) => {
-            let state = State::new(backend.into()).await?;
+            let state = State::new(backend).await?;
             println!("graph stored at: {}", state.storage.info()?)
         }
         Some(Commands::ClearLock {}) => {
-            let state = State::new(backend.into()).await?;
+            let state = State::new(backend).await?;
             state.storage.clear_lock_file();
             println!("cleared lock file");
         }
         None => {
-            let state = State::new(backend.into()).await?;
+            let state = State::new(backend).await?;
             hyperlog_tui::execute(state).await?;
         }
     }
