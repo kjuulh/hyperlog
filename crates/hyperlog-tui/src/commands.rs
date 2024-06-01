@@ -2,6 +2,7 @@ use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 pub mod batch;
 
+pub mod archive;
 pub mod create_item;
 pub mod create_section;
 pub mod open_update_item_dialog;

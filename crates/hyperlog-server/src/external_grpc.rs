@@ -380,6 +380,38 @@ impl Graph for Server {
 
         Ok(Response::new(ToggleItemResponse {}))
     }
+
+    async fn archive(
+        &self,
+        request: tonic::Request<ArchiveRequest>,
+    ) -> std::result::Result<tonic::Response<ArchiveResponse>, tonic::Status> {
+        let req = request.into_inner();
+        tracing::trace!("update item: req({:?})", req);
+
+        if req.root.is_empty() {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "root cannot be empty".to_string(),
+            ));
+        }
+
+        if req.path.is_empty() {
+            return Err(tonic::Status::new(
+                tonic::Code::InvalidArgument,
+                "path cannot be empty".to_string(),
+            ));
+        }
+
+        self.commander
+            .execute(Command::Archive {
+                root: req.root,
+                path: req.path,
+            })
+            .await
+            .map_err(to_tonic_err)?;
+
+        Ok(Response::new(ArchiveResponse {}))
+    }
 }
 
 fn to_native(from: &hyperlog_core::log::GraphItem) -> anyhow::Result<GraphItem> {

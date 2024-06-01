@@ -60,6 +60,7 @@ impl GetGraph {
         nodes
     WHERE
         root_id = $1
+        AND status = 'active'
     LIMIT
         1000
             "#,

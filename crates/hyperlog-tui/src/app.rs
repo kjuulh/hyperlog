@@ -92,7 +92,8 @@ impl<'a> App<'a> {
             Msg::ItemCreated(IOEvent::Success(()))
             | Msg::ItemUpdated(IOEvent::Success(()))
             | Msg::SectionCreated(IOEvent::Success(()))
-            | Msg::ItemToggled(IOEvent::Success(())) => {
+            | Msg::ItemToggled(IOEvent::Success(()))
+            | Msg::Archive(IOEvent::Success(())) => {
                 batch.with(self.graph_explorer.new_update_graph());
             }
             Msg::MoveRight => self.graph_explorer.move_right()?,

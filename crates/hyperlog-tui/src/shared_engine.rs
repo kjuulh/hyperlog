@@ -69,4 +69,8 @@ impl SharedEngine {
     pub(crate) fn get_roots(&self) -> Option<Vec<String>> {
         self.inner.read().unwrap().get_roots()
     }
+
+    pub fn archive(&self, root: &str, path: &[&str]) -> anyhow::Result<()> {
+        self.inner.write().unwrap().archive(root, path)
+    }
 }

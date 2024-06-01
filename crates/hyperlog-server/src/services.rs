@@ -1,3 +1,4 @@
+pub mod archive;
 pub mod create_item;
 pub mod create_root;
 pub mod create_section;

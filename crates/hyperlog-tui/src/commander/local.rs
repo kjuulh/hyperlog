@@ -74,6 +74,9 @@ impl Commander {
                     state,
                 },
             )?,
+            Command::Archive { root, path } => self
+                .engine
+                .archive(&root, &path.iter().map(|p| p.as_str()).collect::<Vec<_>>())?,
         }
 
         self.storage.store(&self.engine)?;

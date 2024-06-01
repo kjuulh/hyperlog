@@ -204,6 +204,12 @@ impl Engine {
             Some(items)
         }
     }
+
+    pub fn archive(&mut self, root: &str, path: &[&str]) -> anyhow::Result<()> {
+        self.delete(root, path)?;
+
+        Ok(())
+    }
 }
 
 impl Display for Engine {

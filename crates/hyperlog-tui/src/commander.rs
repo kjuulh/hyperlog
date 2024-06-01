@@ -39,6 +39,10 @@ pub enum Command {
         src: Vec<String>,
         dest: Vec<String>,
     },
+    Archive {
+        root: String,
+        path: Vec<String>,
+    },
 }
 
 #[derive(Clone)]

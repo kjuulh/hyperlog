@@ -6,7 +6,7 @@ use ratatui::{prelude::*, widgets::*};
 use crate::{
     command_parser::Commands,
     commands::{
-        batch::BatchCommand, create_item::CreateItemCommandExt,
+        archive::ArchiveCommandExt, batch::BatchCommand, create_item::CreateItemCommandExt,
         create_section::CreateSectionCommandExt,
         open_update_item_dialog::OpenUpdateItemDialogCommandExt, toggle_item::ToggleItemCommandExt,
         update_graph::UpdateGraphCommandExt, Command, IntoCommand,
@@ -236,20 +236,25 @@ impl<'a> GraphExplorer<'a> {
         match command {
             Commands::Archive => {
                 if !self.get_current_path().is_empty() {
-                    tracing::debug!("archiving path: {:?}", self.get_current_path())
+                    batch.with(
+                        self.state
+                            .archive_command()
+                            .command(
+                                &self.inner.root,
+                                &self
+                                    .get_current_path()
+                                    .iter()
+                                    .map(|i| i.as_str())
+                                    .collect_vec(),
+                            )
+                            .into_command(),
+                    );
                 }
             }
             Commands::CreateSection { name } => {
                 if !name.is_empty() {
                     let mut path = self.get_current_path();
                     path.push(name.replace(".", "-"));
-
-                    // self.state
-                    //     .commander
-                    //     .execute(commander::Command::CreateSection {
-                    //         root: self.inner.root.clone(),
-                    //         path,
-                    //     })?;
 
                     let cmd = self.state.create_section_command().command(
                         &self.inner.root,

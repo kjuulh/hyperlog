@@ -2,6 +2,7 @@ use hyperlog_core::log::ItemState;
 
 use crate::{
     services::{
+        archive::{self, Archive, ArchiveExt},
         create_item::{self, CreateItem, CreateItemExt},
         create_root::{self, CreateRoot, CreateRootExt},
         create_section::{self, CreateSection, CreateSectionExt},
@@ -43,6 +44,10 @@ pub enum Command {
         src: Vec<String>,
         dest: Vec<String>,
     },
+    Archive {
+        root: String,
+        path: Vec<String>,
+    },
 }
 
 #[allow(dead_code)]
@@ -52,6 +57,7 @@ pub struct Commander {
     create_item: CreateItem,
     update_item: UpdateItem,
     toggle_item: ToggleItem,
+    archive: Archive,
 }
 
 impl Commander {
@@ -61,6 +67,7 @@ impl Commander {
         create_item: CreateItem,
         update_item: UpdateItem,
         toggle_item: ToggleItem,
+        archive: Archive,
     ) -> Self {
         Self {
             create_root,
@@ -68,6 +75,7 @@ impl Commander {
             create_item,
             update_item,
             toggle_item,
+            archive,
         }
     }
 
@@ -133,6 +141,13 @@ impl Commander {
                 Ok(())
             }
             Command::Move { .. } => todo!(),
+            Command::Archive { root, path } => {
+                self.archive
+                    .execute(archive::Request { root, path })
+                    .await?;
+
+                Ok(())
+            }
         }
     }
 }
@@ -149,6 +164,7 @@ impl CommanderExt for SharedState {
             self.create_item_service(),
             self.update_item_service(),
             self.toggle_item_service(),
+            self.archive_service(),
         )
     }
 }
