@@ -23,4 +23,4 @@ tonic = { version = "0.11.0", features = ["tls", "tls-roots"] }
 futures = { version = "0.3.30" }
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
