@@ -9,6 +9,7 @@ pub enum Commands {
     CreateItem { name: String },
     CreateBelow { name: String },
     Edit,
+    Open,
 
     ShowAll,
     HideDone,
@@ -52,6 +53,7 @@ impl CommandParser {
                 "show-all" => Some(Commands::ShowAll),
                 "hide-done" => Some(Commands::HideDone),
                 "test" => Some(Commands::Test),
+                "o" | "open" => Some(Commands::Open),
                 _ => None,
             },
             None => None,

@@ -1,4 +1,3 @@
-use hyperlog_core::log::ItemState;
 use itertools::Itertools;
 
 use crate::{

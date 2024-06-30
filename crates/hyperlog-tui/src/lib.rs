@@ -33,7 +33,9 @@ mod events;
 mod querier;
 mod storage;
 
+mod editor;
 mod logging;
+mod project_dirs;
 mod terminal;
 
 pub async fn execute(state: State) -> Result<()> {

@@ -1,4 +1,5 @@
 use hyperlog_core::log::GraphItem;
+use itertools::Itertools;
 use ratatui::{
     prelude::*,
     widgets::{Block, Borders, Padding, Paragraph},
@@ -6,8 +7,9 @@ use ratatui::{
 
 use crate::{
     command_parser::CommandParser,
-    commands::{batch::BatchCommand, IntoCommand},
+    commands::{batch::BatchCommand, update_item::UpdateItemCommandExt, Command, IntoCommand},
     components::graph_explorer::GraphExplorer,
+    editor,
     models::IOEvent,
     state::SharedState,
     Msg,
@@ -102,6 +104,11 @@ impl<'a> App<'a> {
             Msg::MoveUp => self.graph_explorer.move_up()?,
             Msg::OpenCreateItemDialog => self.open_dialog(),
             Msg::OpenCreateItemDialogBelow => self.open_dialog_below(),
+            Msg::OpenEditor { item } => {
+                if let Some(cmd) = self.open_editor(item) {
+                    batch.with(cmd);
+                }
+            }
             Msg::OpenEditItemDialog { item } => self.open_edit_item_dialog(item),
             Msg::EnterInsertMode => self.mode = Mode::Insert,
             Msg::EnterViewMode => self.mode = Mode::View,
@@ -211,6 +218,42 @@ impl<'a> App<'a> {
             self.focus = AppFocus::Dialog;
             self.mode = Mode::Insert;
         }
+    }
+
+    fn open_editor(&self, item: &GraphItem) -> Option<Command> {
+        match editor::EditorSession::new(item).execute() {
+            Ok(None) => {
+                tracing::info!("editor returned without changes, skipping");
+            }
+            Ok(Some(item)) => {
+                if let GraphItem::Item {
+                    title,
+                    description,
+                    state,
+                } = item
+                {
+                    return Some(
+                        self.state.update_item_command().command(
+                            &self.root,
+                            &self
+                                .graph_explorer
+                                .get_current_path()
+                                .iter()
+                                .map(|s| s.as_str())
+                                .collect_vec(),
+                            &title,
+                            &description,
+                            state,
+                        ),
+                    );
+                }
+            }
+            Err(e) => {
+                tracing::error!("failed to run editor with: {}", e);
+            }
+        }
+
+        None
     }
 }
 

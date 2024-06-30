@@ -5,6 +5,7 @@ pub mod batch;
 pub mod archive;
 pub mod create_item;
 pub mod create_section;
+pub mod open_item;
 pub mod open_update_item_dialog;
 pub mod toggle_item;
 pub mod update_graph;

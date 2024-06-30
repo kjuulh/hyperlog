@@ -7,7 +7,7 @@ use crate::{
     command_parser::Commands,
     commands::{
         archive::ArchiveCommandExt, batch::BatchCommand, create_item::CreateItemCommandExt,
-        create_section::CreateSectionCommandExt,
+        create_section::CreateSectionCommandExt, open_item::OpenItemCommandExt,
         open_update_item_dialog::OpenUpdateItemDialogCommandExt, toggle_item::ToggleItemCommandExt,
         update_graph::UpdateGraphCommandExt, Command, IntoCommand,
     },
@@ -144,7 +144,7 @@ impl<'a> GraphExplorer<'a> {
     /// Choses: 0.1.0.0 else nothing
     pub(crate) fn move_right(&mut self) -> Result<()> {
         if let Some(graph) = self.linearize_graph() {
-            tracing::debug!("graph: {:?}", graph);
+            tracing::trace!("graph: {:?}", graph);
             let position_items = &self.inner.current_position;
 
             if let Some(next_item) = graph.next_right(position_items) {
@@ -337,6 +337,15 @@ impl<'a> GraphExplorer<'a> {
 
                     None
                 })));
+            }
+            Commands::Open => {
+                if self.get_current_item().is_some() {
+                    batch.with(
+                        self.state
+                            .open_item_command()
+                            .command(&self.inner.root, self.get_current_path()),
+                    );
+                }
             }
 
             _ => (),

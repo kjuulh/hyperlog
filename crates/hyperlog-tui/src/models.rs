@@ -12,6 +12,7 @@ pub enum Msg {
     OpenCreateItemDialog,
     OpenCreateItemDialogBelow,
     OpenEditItemDialog { item: GraphItem },
+    OpenEditor { item: GraphItem },
     Interact,
 
     EnterInsertMode,
@@ -30,6 +31,8 @@ pub enum Msg {
     Archive(IOEvent<()>),
 
     OpenUpdateItemDialog(IOEvent<()>),
+
+    OpenItem(IOEvent<()>),
 }
 
 #[derive(Debug)]
