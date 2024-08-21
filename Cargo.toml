@@ -19,7 +19,7 @@ serde = { version = "1.0.202", features = ["derive"] }
 serde_json = "1.0.117"
 itertools = "0.13.0"
 uuid = { version = "1.8.0", features = ["v4"] }
-tonic = { version = "0.11.0", features = ["tls", "tls-roots"] }
+tonic = { version = "0.12.0", features = ["tls", "tls-roots"] }
 futures = { version = "0.3.30" }
 sha2 = { version = "0.10.8" }
 hex = { version = "0.4.3" }
