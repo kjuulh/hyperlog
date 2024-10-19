@@ -1,0 +1,4 @@
+version: v2
+modules:
+  - path: crates/hyperlog-protos/proto
+    name: buf.build/noschemaplz/hyperlog
