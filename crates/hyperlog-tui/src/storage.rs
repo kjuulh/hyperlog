@@ -80,6 +80,13 @@ impl Storage {
     pub fn clear_lock_file(self) {
         let mut lock_file = self.lock_file.lock().unwrap();
 
+        if let Ok(lock) = self.state_lock() {
+            if lock.exists() {
+                tracing::info!("clearing lock file");
+                std::fs::remove_file(&lock).expect("to be able to remove lockfile");
+            }
+        }
+
         if lock_file.is_some() {
             *lock_file = None;
         }

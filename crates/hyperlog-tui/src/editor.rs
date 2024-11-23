@@ -5,6 +5,10 @@ use std::{
 };
 
 use anyhow::{anyhow, Context};
+use crossterm::{
+    terminal::{disable_raw_mode, enable_raw_mode},
+    ExecutableCommand,
+};
 use hyperlog_core::log::{GraphItem, ItemState};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -127,6 +131,11 @@ impl SessionFile {
 
 impl Drop for SessionFile {
     fn drop(&mut self) {
+        // std::io::stdout()
+        //     .execute(crossterm::terminal::EnterAlternateScreen)
+        //     .expect("to be able to restore alternative mode");
+        // enable_raw_mode().expect("to be able to restore raw mode");
+
         if self.path.exists() {
             tracing::debug!("cleaning up file: {}", self.path.display());
 
@@ -180,6 +189,7 @@ impl<'a> EditorSession<'a> {
                 .as_bytes(),
         )
         .context("failed to write to file")?;
+        file.flush().context("failed to flush to disk")?;
 
         let modified_time = file.metadata()?.modified()?;
 
@@ -209,7 +219,26 @@ impl<'a> EditorSession<'a> {
             editor,
             session_file.get_path().display()
         );
-        if let Err(e) = std::process::Command::new(editor)
+
+        std::io::stdout().flush()?;
+
+        // disable_raw_mode()?;
+        // std::io::stdout().execute(crossterm::terminal::LeaveAlternateScreen)?;
+
+        let path = session_file.get_path();
+        if let Some(parent) = path.parent() {
+            if let Err(e) = std::process::Command::new(editor)
+                .arg(
+                    path.file_name()
+                        .ok_or(anyhow::anyhow!("failed to find file in the given path"))?,
+                )
+                .current_dir(parent)
+                .status()
+            {
+                tracing::error!("failed command with: {}", e);
+                return Ok(None);
+            }
+        } else if let Err(e) = std::process::Command::new(editor)
             .arg(session_file.get_path())
             .status()
         {
@@ -238,7 +267,7 @@ trait ItemExt {
     fn get_digest(&self) -> Option<String>;
 }
 
-impl<'a> ItemExt for &'a GraphItem {
+impl ItemExt for &GraphItem {
     fn get_digest(&self) -> Option<String> {
         if let GraphItem::Item { title, .. } = self {
             let digest = sha2::Sha256::digest(title.as_bytes());

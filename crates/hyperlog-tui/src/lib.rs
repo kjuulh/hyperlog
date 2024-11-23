@@ -31,7 +31,7 @@ pub mod state;
 mod engine;
 mod events;
 mod querier;
-mod storage;
+pub mod storage;
 
 mod editor;
 mod logging;

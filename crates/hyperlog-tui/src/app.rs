@@ -221,6 +221,7 @@ impl<'a> App<'a> {
     }
 
     fn open_editor(&self, item: &GraphItem) -> Option<Command> {
+        tracing::info!("entering editor for session");
         match editor::EditorSession::new(item).execute() {
             Ok(None) => {
                 tracing::info!("editor returned without changes, skipping");

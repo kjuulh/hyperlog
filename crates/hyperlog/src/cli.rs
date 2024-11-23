@@ -164,11 +164,13 @@ pub async fn execute() -> anyhow::Result<()> {
         }
         Some(Commands::Info {}) => {
             let state = State::new(backend).await?;
-            println!("graph stored at: {}", state.storage.info()?)
+            if let Some(info) = state.info() {
+                println!("graph stored at: {}", info?);
+            }
         }
         Some(Commands::ClearLock {}) => {
             let state = State::new(backend).await?;
-            state.storage.clear_lock_file();
+            state.unlock();
             println!("cleared lock file");
         }
         None => {
