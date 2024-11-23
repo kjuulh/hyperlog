@@ -6,6 +6,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2024-11-23
+
+### Added
+- update hyperlog
+- add hyperlog
+
+### Fixed
+- *(deps)* update rust crate tower-http to v0.6.2
+- *(deps)* update rust crate serde to v1.0.215
+- *(deps)* update rust crate serde to v1.0.214
+- *(deps)* update rust crate serde to v1.0.213
+- *(deps)* update rust crate ratatui to 0.29.0
+- *(deps)* update rust crate serde_json to v1.0.132
+- *(deps)* update rust crate serde_json to v1.0.129
+- *(deps)* update rust crate uuid to v1.11.0
+- *(deps)* update rust crate human-panic to v2.0.2
+- *(deps)* update rust crate tower-http to v0.6.1
+- *(deps)* update rust crate prost to v0.13.3
+- *(deps)* update rust crate tower-http to 0.6.0
+- *(deps)* update rust crate serde to v1.0.210
+- *(deps)* update rust crate sqlx to v0.8.2
+- *(deps)* update rust crate prost to v0.13.2
+- *(deps)* update rust crate ratatui to v0.28.1
+- *(deps)* update rust crate sqlx to v0.8.1
+- *(deps)* update rust crate serde to v1.0.209
+- *(deps)* update rust crate serde_json to v1.0.127
+- *(deps)* update rust crate serde_json to v1.0.126
+- *(deps)* update rust crate prost to 0.13.0
+- *(deps)* update rust crate serde to v1.0.208
+
+### Other
+- *(deps)* update all dependencies
+- *(deps)* update rust crate axum to v0.7.8
+- *(deps)* update rust crate clap to v4.5.21
+- *(deps)* update rust crate tempfile to v3.14.0
+- *(deps)* update rust crate tokio to v1.41.1
+- *(deps)* update rust crate anyhow to v1.0.93
+- *(deps)* update rust crate anyhow to v1.0.92
+- *(deps)* update all dependencies to v1.0.91
+- *(deps)* update all dependencies
+- *(deps)* update rust crate clap to v4.5.20
+- *(deps)* update rust crate futures to v0.3.31
+- *(deps)* update rust crate clap to v4.5.19
+- *(deps)* update rust crate tempfile to v3.13.0
+- *(deps)* update rust crate axum to v0.7.7
+- *(deps)* update tonic monorepo to v0.12.3
+- *(deps)* update all dependencies
+- *(deps)* update rust crate anyhow to v1.0.89
+- *(deps)* update rust crate anyhow to v1.0.88
+- *(deps)* update rust crate anyhow to v1.0.87
+- *(deps)* update rust crate similar-asserts to v1.6.0
+- *(deps)* update all dependencies
+- *(deps)* update rust crate tokio to v1.40.0
+- *(deps)* update tonic monorepo to v0.12.2
+- *(deps)* update tonic monorepo to 0.12.0
+- *(deps)* update all dependencies
+
 ## [0.3.0] - 2024-06-30
 
 ### Added
