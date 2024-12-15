@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use tonic::transport::{Channel, ClientTlsConfig};
 
 use crate::{
@@ -14,15 +16,18 @@ pub struct State {
 }
 
 pub enum Backend {
-    Local,
+    Local { path_override: Option<PathBuf> },
     Remote { url: String },
 }
 
 impl State {
     pub async fn new(backend: Backend) -> anyhow::Result<Self> {
         let (querier, commander) = match &backend {
-            Backend::Local => {
-                let storage = Storage::new();
+            Backend::Local { path_override } => {
+                let mut storage = Storage::new();
+                if let Some(path_override) = path_override {
+                    storage.with_base(path_override);
+                }
                 let engine = storage.load()?;
                 let events = Events::default();
                 let engine = SharedEngine::from(engine);
@@ -53,15 +58,21 @@ impl State {
     }
 
     pub fn unlock(&self) {
-        if let Backend::Local = &self.backend {
-            let storage = Storage::new();
+        if let Backend::Local { path_override } = &self.backend {
+            let mut storage = Storage::new();
+            if let Some(path_override) = path_override {
+                storage.with_base(path_override);
+            }
             storage.clear_lock_file();
         }
     }
 
     pub fn info(&self) -> Option<anyhow::Result<String>> {
-        if let Backend::Local = &self.backend {
-            let storage = Storage::new();
+        if let Backend::Local { path_override } = &self.backend {
+            let mut storage = Storage::new();
+            if let Some(path_override) = path_override {
+                storage.with_base(path_override);
+            }
             return Some(storage.info());
         }
 

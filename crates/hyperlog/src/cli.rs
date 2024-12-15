@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::{Parser, Subcommand, ValueEnum};
 use hyperlog_tui::{
     commander,
@@ -15,6 +17,9 @@ struct Command {
 
     #[arg(long = "backend-url", required_if_eq("backend", "remote"))]
     backend_url: Option<String>,
+
+    #[arg(long = "local-path")]
+    local_path: Option<PathBuf>,
 }
 
 #[derive(ValueEnum, Clone)]
@@ -90,7 +95,9 @@ pub async fn execute() -> anyhow::Result<()> {
     let backend_url = cli.backend_url;
 
     let backend = match backend {
-        BackendArg::Local => Backend::Local,
+        BackendArg::Local => Backend::Local {
+            path_override: cli.local_path.clone(),
+        },
         BackendArg::Remote => Backend::Remote {
             url: backend_url.expect("backend-url to be set"),
         },
