@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2024-12-15
+
+### Added
+- allow taking a local path
+
+### Fixed
+- *(deps)* update rust crate serde to v1.0.216
+- *(deps)* update rust crate prost to v0.13.4
+
+### Other
+- *(deps)* update rust crate clap to v4.5.23
+- *(deps)* update all dependencies
+- *(deps)* update rust crate tracing-subscriber to v0.3.19
+- *(deps)* update rust crate tracing to v0.1.41
+
 ## [0.4.0] - 2024-11-23
 
 ### Added
