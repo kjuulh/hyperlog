@@ -182,11 +182,11 @@ dependencies = [
 
 [[package]]
 name = "axum"
-version = "0.8.2"
+version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "efea76243612a2436fb4074ba0cf3ba9ea29efdeb72645d8fc63f116462be1de"
+checksum = "021e862c184ae977658b36c4500f7feac3221ca5da43e3f25bd04ab6c79a29b5"
 dependencies = [
- "axum-core 0.5.1",
+ "axum-core 0.5.2",
  "bytes",
  "form_urlencoded",
  "futures-util",
@@ -236,9 +236,9 @@ dependencies = [
 
 [[package]]
 name = "axum-core"
-version = "0.5.1"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eab1b0df7cded837c40dacaa2e1c33aa17c84fc3356ae67b5645f1e83190753e"
+checksum = "68464cd0412f486726fb3373129ef5d2993f90c34bc2bc1c1e9943b2f4fc7ca6"
 dependencies = [
  "bytes",
  "futures-core",
@@ -1087,7 +1087,7 @@ name = "hyperlog"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "axum 0.8.2",
+ "axum 0.8.4",
  "bus",
  "clap",
  "dirs",
@@ -1110,7 +1110,7 @@ name = "hyperlog-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "axum 0.8.2",
+ "axum 0.8.4",
  "clap",
  "dotenv",
  "serde",
@@ -1137,7 +1137,7 @@ name = "hyperlog-server"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "axum 0.8.2",
+ "axum 0.8.4",
  "hyperlog-core",
  "hyperlog-protos",
  "serde",
@@ -2603,9 +2603,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.43.0"
+version = "1.45.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d61fa4ffa3de412bfea335c6ecff681de2b609ba3c77ef3e00e521813a9ed9e"
+checksum = "75ef51a33ef1da925cea3e4eb122833cb377c61439ca401b770f54902b806779"
 dependencies = [
  "backtrace",
  "bytes",
