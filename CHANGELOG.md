@@ -6,6 +6,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2025-06-04
+
+### Fixed
+- *(deps)* update rust crate serde to v1.0.219
+- *(deps)* update rust crate uuid to v1.15.1
+- *(deps)* update rust crate uuid to v1.14.0
+- *(deps)* update rust crate serde to v1.0.218
+- *(deps)* update rust crate prost to v0.13.5
+- *(deps)* update all dependencies
+- *(deps)* update all dependencies
+- *(deps)* update rust crate serde_json to v1.0.136
+- *(deps)* update rust crate uuid to v1.12.0
+- *(deps)* update all dependencies to v6
+- *(deps)* update rust crate uuid to v1.11.1
+- *(deps)* update rust crate serde_json to v1.0.135
+- *(deps)* update all dependencies
+- *(deps)* update rust crate serde to v1.0.217
+- *(deps)* update rust crate serde_json to v1.0.134
+
+### Other
+- *(deps)* update rust crate axum to v0.8.4
+- *(deps)* update all dependencies
+- *(deps)* update all dependencies
+- *(deps)* update all dependencies
+- *(deps)* update all dependencies
+- *(deps)* update rust crate tempfile to v3.17.0
+- *(deps)* update rust crate clap to v4.5.29
+- *(deps)* update all dependencies
+- *(deps)* update rust crate clap to v4.5.28
+- *(deps)* update all dependencies
+- *(deps)* update rust crate clap to v4.5.26
+- *(deps)* update rust crate tokio to v1.43.0
+- *(deps)* update rust crate clap to v4.5.24
+- *(deps)* update rust crate axum to 0.8
+- *(deps)* update rust crate itertools to 0.14.0
+- *(deps)* update rust crate anyhow to v1.0.95
+
 ## [0.5.0] - 2024-12-15
 
 ### Added
