@@ -2,7 +2,7 @@
 name = "hyperlog-tui"
 version = "0.1.0"
 edition = "2021"
-repository = "https://git.front.kjuulh.io/kjuulh/hyperlog"
+repository = "https://git.kjuulh.io/kjuulh/hyperlog"
 
 [dependencies]
 hyperlog-core.workspace = true

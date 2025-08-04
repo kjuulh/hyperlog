@@ -1,5 +1,7 @@
 # hyperlog
 
+![demo](./assets/demo.gif)
+
 - [x] Display todos as todos
 - [x] Create sections
 - [x] Edit todos
