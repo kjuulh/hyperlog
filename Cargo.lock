@@ -182,9 +182,9 @@ dependencies = [
 
 [[package]]
 name = "axum"
-version = "0.8.7"
+version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b098575ebe77cb6d14fc7f32749631a6e44edbef6b796f89b020e99ba20d425"
+checksum = "8b52af3cb4058c895d37317bb27508dccc8e5f2d39454016b297bf4a400597b8"
 dependencies = [
  "axum-core 0.5.5",
  "bytes",
@@ -1085,7 +1085,7 @@ name = "hyperlog"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "axum 0.8.7",
+ "axum 0.8.8",
  "bus",
  "clap",
  "dirs",
@@ -1108,7 +1108,7 @@ name = "hyperlog-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "axum 0.8.7",
+ "axum 0.8.8",
  "clap",
  "dotenv",
  "serde",
@@ -1135,7 +1135,7 @@ name = "hyperlog-server"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "axum 0.8.7",
+ "axum 0.8.8",
  "hyperlog-core",
  "hyperlog-protos",
  "serde",
@@ -2514,7 +2514,7 @@ dependencies = [
  "getrandom 0.3.1",
  "once_cell",
  "rustix",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
