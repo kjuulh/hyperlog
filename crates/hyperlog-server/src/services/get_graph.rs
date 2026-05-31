@@ -175,9 +175,11 @@ mod engine {
         }
 
         pub fn create_root(&mut self, root: &str) -> anyhow::Result<()> {
+            if self.graph.contains_key(root) {
+                return Err(anyhow!("entry was already found, aborting"));
+            }
             self.graph
-                .try_insert(root.to_string(), GraphItem::User(BTreeMap::default()))
-                .map_err(|_| anyhow!("entry was already found, aborting"))?;
+                .insert(root.to_string(), GraphItem::User(BTreeMap::default()));
 
             Ok(())
         }
@@ -266,12 +268,16 @@ mod engine {
 
             match dest {
                 GraphItem::User(u) => {
-                    u.try_insert(src_item.to_string(), src)
-                        .map_err(|_e| anyhow!("key was already found, aborting: {}", src_item))?;
+                    if u.contains_key(*src_item) {
+                        return Err(anyhow!("key was already found, aborting: {}", src_item));
+                    }
+                    u.insert(src_item.to_string(), src);
                 }
                 GraphItem::Section(s) => {
-                    s.try_insert(src_item.to_string(), src)
-                        .map_err(|_e| anyhow!("key was already found, aborting: {}", src_item))?;
+                    if s.contains_key(*src_item) {
+                        return Err(anyhow!("key was already found, aborting: {}", src_item));
+                    }
+                    s.insert(src_item.to_string(), src);
                 }
                 GraphItem::Item { .. } => {
                     anyhow::bail!(
