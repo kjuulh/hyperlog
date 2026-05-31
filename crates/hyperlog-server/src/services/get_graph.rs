@@ -16,6 +16,7 @@ pub struct GetGraph {
 pub struct Request {
     pub root: String,
     pub path: Vec<String>,
+    pub user_id: Option<uuid::Uuid>,
 }
 pub struct Response {
     pub item: GraphItem,
@@ -46,12 +47,19 @@ impl GetGraph {
     }
 
     pub async fn execute(&self, req: Request) -> anyhow::Result<Response> {
-        let Root { id: root_id, .. } =
-            sqlx::query_as(r#"SELECT * FROM roots WHERE root_name = $1"#)
-                .bind(&req.root)
-                .fetch_one(&self.db)
-                .await?;
+        let Root { id: root_id, .. } = sqlx::query_as(
+            r#"SELECT * FROM roots WHERE root_name = $1 AND user_id IS NOT DISTINCT FROM $2"#,
+        )
+        .bind(&req.root)
+        .bind(req.user_id)
+        .fetch_one(&self.db)
+        .await?;
 
+        // ORDER BY path is REQUIRED: the tree builder needs every node's
+        // ancestors present, and lexicographic path order guarantees ancestors
+        // sort before descendants — so even if the (safety) LIMIT truncates, it
+        // only drops deep leaves, never a parent (the previous LIMIT had no
+        // ORDER BY and returned an arbitrary subset → broken builds → 500s).
         let nodes: Vec<Node> = sqlx::query_as(
             r#"
     SELECT
@@ -61,8 +69,10 @@ impl GetGraph {
     WHERE
         root_id = $1
         AND status = 'active'
+    ORDER BY
+        path
     LIMIT
-        1000
+        100000
             "#,
         )
         .bind(root_id)

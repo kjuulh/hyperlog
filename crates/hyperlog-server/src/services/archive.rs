@@ -8,6 +8,7 @@ pub struct Archive {
 pub struct Request {
     pub root: String,
     pub path: Vec<String>,
+    pub user_id: Option<uuid::Uuid>,
 }
 pub struct Response {}
 
@@ -22,11 +23,13 @@ impl Archive {
     }
 
     pub async fn execute(&self, req: Request) -> anyhow::Result<Response> {
-        let Root { id: root_id, .. } =
-            sqlx::query_as(r#"SELECT * FROM roots WHERE root_name = $1"#)
-                .bind(req.root)
-                .fetch_one(&self.db)
-                .await?;
+        let Root { id: root_id, .. } = sqlx::query_as(
+            r#"SELECT * FROM roots WHERE root_name = $1 AND user_id IS NOT DISTINCT FROM $2"#,
+        )
+        .bind(req.root)
+        .bind(req.user_id)
+        .fetch_one(&self.db)
+        .await?;
 
         sqlx::query(
             r#"

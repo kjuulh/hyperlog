@@ -1,4 +1,4 @@
-use hyperlog_core::log::ItemState;
+use hyperlog_core::log::{ItemState, Link};
 use sqlx::types::Json;
 
 use crate::state::SharedState;
@@ -11,6 +11,7 @@ pub struct ToggleItem {
 pub struct Request {
     pub root: String,
     pub path: Vec<String>,
+    pub user_id: Option<uuid::Uuid>,
 }
 pub struct Response {}
 
@@ -19,6 +20,11 @@ struct ItemContent {
     pub title: String,
     pub description: String,
     pub state: ItemState,
+    // Preserved across a toggle (don't drop PM metadata when flipping done).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub due: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub links: Vec<Link>,
 }
 
 #[derive(sqlx::FromRow)]
@@ -38,11 +44,13 @@ impl ToggleItem {
     }
 
     pub async fn execute(&self, req: Request) -> anyhow::Result<Response> {
-        let Root { id: root_id, .. } =
-            sqlx::query_as(r#"SELECT * FROM roots WHERE root_name = $1"#)
-                .bind(req.root)
-                .fetch_one(&self.db)
-                .await?;
+        let Root { id: root_id, .. } = sqlx::query_as(
+            r#"SELECT * FROM roots WHERE root_name = $1 AND user_id IS NOT DISTINCT FROM $2"#,
+        )
+        .bind(req.root)
+        .bind(req.user_id)
+        .fetch_one(&self.db)
+        .await?;
         let Node {
             id: node_id,
             mut item_content,

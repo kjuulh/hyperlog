@@ -7,6 +7,7 @@ pub struct CreateRoot {
 
 pub struct Request {
     pub root: String,
+    pub user_id: Option<uuid::Uuid>,
 }
 pub struct Response {}
 
@@ -17,9 +18,10 @@ impl CreateRoot {
 
     pub async fn execute(&self, req: Request) -> anyhow::Result<Response> {
         let root_id = uuid::Uuid::new_v4();
-        sqlx::query(r#"INSERT INTO roots (id, root_name) VALUES ($1, $2)"#)
+        sqlx::query(r#"INSERT INTO roots (id, root_name, user_id) VALUES ($1, $2, $3)"#)
             .bind(root_id)
             .bind(req.root)
+            .bind(req.user_id)
             .execute(&self.db)
             .await?;
 

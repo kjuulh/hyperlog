@@ -5,7 +5,9 @@ pub struct GetAvailableRoots {
     db: sqlx::PgPool,
 }
 
-pub struct Request {}
+pub struct Request {
+    pub user_id: Option<uuid::Uuid>,
+}
 pub struct Response {
     pub roots: Vec<String>,
 }
@@ -20,17 +22,21 @@ impl GetAvailableRoots {
         Self { db }
     }
 
-    pub async fn execute(&self, _req: Request) -> anyhow::Result<Response> {
+    pub async fn execute(&self, req: Request) -> anyhow::Result<Response> {
+        // Scope to the user's workspaces; legacy (NULL) rows for unauthenticated.
         let roots: Vec<Root> = sqlx::query_as(
             r#"
     SELECT
         *
     FROM
         roots
+    WHERE
+        user_id IS NOT DISTINCT FROM $1
     LIMIT
         100
             "#,
         )
+        .bind(req.user_id)
         .fetch_all(&self.db)
         .await?;
 

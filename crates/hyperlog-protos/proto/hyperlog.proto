@@ -13,6 +13,11 @@ message SectionGraphItem {
 message ItemStateNotDone {}
 message ItemStateDone {}
 
+message Link {
+  string title = 1;
+  string url = 2;
+}
+
 message ItemGraphItem {
   string title = 1;
   string description = 2;
@@ -20,6 +25,10 @@ message ItemGraphItem {
     ItemStateNotDone not_done = 3;
     ItemStateDone done = 4;
   }
+  // Project-management metadata.
+  string due = 5;            // ISO date "YYYY-MM-DD"; empty = none. (read/write)
+  int64 created_unix = 6;    // epoch seconds; 0 = unknown. (read-only, server-set)
+  repeated Link links = 7;
 }
 
 message GraphItem {
@@ -38,11 +47,126 @@ service Graph {
   rpc UpdateItem(UpdateItemRequest) returns (UpdateItemResponse);
   rpc ToggleItem(ToggleItemRequest) returns (ToggleItemResponse);
   rpc Archive(ArchiveRequest) returns (ArchiveResponse);
-  
+  rpc Restore(RestoreRequest) returns (RestoreResponse);
+  // Move/reparent a node (and its subtree) from src to dest (root-relative).
+  rpc Move(MoveRequest) returns (MoveResponse);
+  // Set the manual order of a parent's direct children.
+  rpc Reorder(ReorderRequest) returns (ReorderResponse);
+
   // Queriers
   rpc GetAvailableRoots(GetAvailableRootsRequest) returns (GetAvailableRootsResponse);
   rpc Get(GetRequest) returns (GetReply);
+  rpc GetArchived(GetArchivedRequest) returns (GetArchivedResponse);
+  // Bounded, tapering, prefix-scoped fetch (scalable view).
+  rpc GetView(GetViewRequest) returns (GetViewResponse);
 
+}
+
+message GetViewRequest {
+  string root = 1;
+  string focus = 2;            // dot-joined root-relative path; empty = root
+  repeated string expanded = 3; // dot-joined paths to expand fully (one level)
+  int32 max_depth = 4;          // tiers below focus to include (default 3)
+  repeated int32 limits = 5;    // per-depth child caps, e.g. [10,5,3]; 0/absent = stop
+}
+message ViewNode {
+  string key = 1;
+  repeated string path = 2;     // full path incl. root
+  string kind = 3;              // root | section | item
+  string title = 4;
+  string description = 5;
+  bool done = 6;
+  int32 child_count = 7;        // direct children (so UI can show "+N more")
+  bool truncated = 8;           // some direct children were not included
+  repeated ViewNode children = 9;
+  // Project-management metadata (items only).
+  string due = 10;              // ISO date "YYYY-MM-DD"; empty = none
+  int64 created_unix = 11;      // epoch seconds; 0 = unknown
+  repeated Link links = 12;
+}
+message GetViewResponse {
+  ViewNode root = 1;
+}
+
+message RestoreRequest {
+  string root = 1;
+  repeated string path = 2;
+}
+message RestoreResponse {}
+
+message MoveRequest {
+  string root = 1;
+  repeated string src = 2;  // current path (root-relative)
+  repeated string dest = 3; // new path (root-relative; parent + key)
+}
+message MoveResponse {}
+
+message ReorderRequest {
+  string root = 1;
+  repeated string path = 2;  // parent (root-relative); empty = top level
+  repeated string order = 3; // child keys in desired order
+}
+message ReorderResponse {}
+
+message GetArchivedRequest {
+  string root = 1;
+}
+message ArchivedItem {
+  repeated string path = 1;
+  string item_type = 2; // SECTION | ITEM
+  string title = 3;     // for items
+}
+message GetArchivedResponse {
+  repeated ArchivedItem items = 1;
+}
+
+// Users & authentication. The server is a pure API (no cookies): it issues a
+// short-lived access JWT and an opaque rotating refresh token. All Graph calls
+// require `authorization: Bearer <access_jwt>` metadata and are scoped to the
+// authenticated user (roots are user-owned "workspaces").
+service Auth {
+  rpc Register(RegisterRequest) returns (AuthResponse);
+  rpc Login(LoginRequest) returns (AuthResponse);
+  rpc Refresh(RefreshRequest) returns (AuthResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+  rpc Me(MeRequest) returns (User);
+}
+
+message User {
+  string id = 1;
+  string email = 2;
+  string username = 3;
+}
+
+message RegisterRequest {
+  string email = 1;
+  string username = 2;
+  string password = 3;
+}
+
+message LoginRequest {
+  // email or username
+  string identifier = 1;
+  string password = 2;
+}
+
+message RefreshRequest {
+  string refresh_token = 1;
+}
+
+message LogoutRequest {
+  string refresh_token = 1;
+}
+message LogoutResponse {}
+
+message MeRequest {}
+
+message AuthResponse {
+  User user = 1;
+  string access_token = 2;       // signed JWT
+  int64 access_expires_in = 3;   // seconds until access expiry
+  string refresh_token = 4;      // opaque; store securely / in httpOnly cookie
+  int64 refresh_expires_in = 5;  // seconds until refresh expiry
 }
 
 // Commands

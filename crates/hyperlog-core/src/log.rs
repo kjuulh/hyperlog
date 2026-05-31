@@ -19,6 +19,15 @@ impl Default for ItemState {
     }
 }
 
+/// An external reference link attached to an item (project-management metadata).
+#[derive(Deserialize, Serialize, PartialEq, Eq, Clone, Debug, Default)]
+pub struct Link {
+    #[serde(default)]
+    pub title: String,
+    #[serde(default)]
+    pub url: String,
+}
+
 #[derive(Deserialize, Serialize, PartialEq, Eq, Clone, Debug)]
 #[serde(tag = "type")]
 pub enum GraphItem {

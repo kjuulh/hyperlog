@@ -1,0 +1,3 @@
+-- Manual ordering of siblings within a parent. NULL = unordered (falls back to
+-- path/alpha, after any explicitly-ordered siblings). Reorder sets 0,1,2,…
+ALTER TABLE nodes ADD COLUMN IF NOT EXISTS sort_order double precision;

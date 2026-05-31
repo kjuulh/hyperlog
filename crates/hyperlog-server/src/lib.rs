@@ -8,6 +8,7 @@ mod external_grpc;
 mod external_http;
 mod internal_http;
 
+mod auth;
 mod commands;
 mod querier;
 
