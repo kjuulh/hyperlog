@@ -1,0 +1,24 @@
+# Fuse the per-arch hyperlog-server images built by ci.yaml into multi-arch
+# manifest lists under the user-facing tags (latest / main / main-<sha>).
+when:
+  - event: push
+    branch: main
+
+depends_on:
+  - ci
+
+steps:
+  merge:
+    image: docker:27-cli
+    environment:
+      REGISTRY_TOKEN:
+        from_secret: registry_token
+    commands:
+      - echo "$REGISTRY_TOKEN" | docker login git.kjuulh.io -u kjuulh --password-stdin
+      - >
+        docker buildx imagetools create
+        -t git.kjuulh.io/kjuulh/hyperlog-server:latest
+        -t git.kjuulh.io/kjuulh/hyperlog-server:main
+        -t git.kjuulh.io/kjuulh/hyperlog-server:main-${CI_COMMIT_SHA_SHORT}
+        git.kjuulh.io/kjuulh/hyperlog-server:main-amd64-${CI_COMMIT_SHA_SHORT}
+        git.kjuulh.io/kjuulh/hyperlog-server:main-arm64-${CI_COMMIT_SHA_SHORT}

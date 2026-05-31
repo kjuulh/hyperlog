@@ -1,0 +1,44 @@
+# Build + push per-arch docker images for hyperlog-serve on every push to main.
+# Matrix splits into parallel amd64/arm64 workflows, each routed to a native
+# runner (no QEMU). manifest.yaml fuses them into multi-arch tags. The release
+# build itself is the compile gate (no separate cargo step).
+#
+# Required woodpecker secrets:
+#   registry_token — token with package:write on git.kjuulh.io/kjuulh
+# Required woodpecker server config (admin):
+#   WOODPECKER_PLUGINS_PRIVILEGED=woodpeckerci/plugin-docker-buildx
+
+when:
+  - event: push
+    branch: main
+
+matrix:
+  ARCH:
+    - amd64
+    - arm64
+
+labels:
+  platform: linux/${ARCH}
+
+steps:
+  build-and-push:
+    image: woodpeckerci/plugin-docker-buildx:5
+    settings:
+      registry: git.kjuulh.io
+      repo: git.kjuulh.io/kjuulh/hyperlog-server
+      dockerfile: Dockerfile
+      context: .
+      username: kjuulh
+      password:
+        from_secret: registry_token
+      build_args:
+        - CARGO_NET_GIT_FETCH_WITH_CLI=true
+        # sccache backend lives on the homelab VLAN — see Dockerfile.
+        - SCCACHE_MEMCACHED_ENDPOINT=tcp://10.0.10.13:11211
+      platforms: linux/${ARCH}
+      cache_images:
+        - git.kjuulh.io/kjuulh/hyperlog-server:buildcache-${ARCH}
+      tags:
+        - main-${ARCH}
+        - main-${ARCH}-${CI_COMMIT_SHA_SHORT}
+      auto_tag: false

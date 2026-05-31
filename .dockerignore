@@ -1,0 +1,7 @@
+target
+.git
+.jj
+assets
+*.md
+.woodpecker
+.github
