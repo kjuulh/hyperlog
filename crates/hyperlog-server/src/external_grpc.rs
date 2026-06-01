@@ -595,6 +595,38 @@ impl Graph for Server {
             root: Some(to_view_node(root)),
         }))
     }
+
+    async fn backlinks(
+        &self,
+        request: tonic::Request<BacklinksRequest>,
+    ) -> std::result::Result<tonic::Response<BacklinksResponse>, tonic::Status> {
+        let user_id = request.extensions().get::<AuthedUser>().map(|u| u.0);
+        let req = request.into_inner();
+        let hits = self
+            .querier
+            .backlinks(&req.root, user_id, req.path)
+            .await
+            .map_err(to_tonic_err)?;
+        Ok(Response::new(BacklinksResponse {
+            items: hits
+                .into_iter()
+                .map(|h| ViewNode {
+                    key: h.key,
+                    path: h.path,
+                    kind: "item".into(),
+                    title: h.title,
+                    description: h.description,
+                    done: h.done,
+                    child_count: 0,
+                    truncated: false,
+                    children: Vec::new(),
+                    due: String::new(),
+                    created_unix: 0,
+                    links: Vec::new(),
+                })
+                .collect(),
+        }))
+    }
 }
 
 fn to_view_node(v: crate::services::get_view::ViewItem) -> ViewNode {

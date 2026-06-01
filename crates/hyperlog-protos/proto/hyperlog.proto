@@ -59,7 +59,17 @@ service Graph {
   rpc GetArchived(GetArchivedRequest) returns (GetArchivedResponse);
   // Bounded, tapering, prefix-scoped fetch (scalable view).
   rpc GetView(GetViewRequest) returns (GetViewResponse);
+  // "What links here": items whose body wiki-links to the node at `path`.
+  rpc Backlinks(BacklinksRequest) returns (BacklinksResponse);
 
+}
+
+message BacklinksRequest {
+  string root = 1;
+  repeated string path = 2; // root-relative path of the target node
+}
+message BacklinksResponse {
+  repeated ViewNode items = 1; // the linking items (flat)
 }
 
 message GetViewRequest {

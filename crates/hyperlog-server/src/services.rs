@@ -8,6 +8,7 @@ pub mod restore;
 pub mod toggle_item;
 pub mod update_item;
 
+pub mod backlinks;
 pub mod get_archived;
 pub mod get_available_roots;
 pub mod get_graph;

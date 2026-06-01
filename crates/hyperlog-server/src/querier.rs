@@ -4,6 +4,7 @@ use std::collections::HashSet;
 
 use crate::{
     services::{
+        backlinks::{self, Backlinks, BacklinksExt},
         get_archived::{self, ArchivedItem, GetArchived, GetArchivedExt},
         get_available_roots::{self, GetAvailableRoots, GetAvailableRootsExt},
         get_graph::{GetGraph, GetGraphExt},
@@ -17,6 +18,7 @@ pub struct Querier {
     get_graph: GetGraph,
     get_archived: GetArchived,
     get_view: GetView,
+    backlinks: Backlinks,
 }
 
 impl Querier {
@@ -25,13 +27,32 @@ impl Querier {
         get_graph: GetGraph,
         get_archived: GetArchived,
         get_view: GetView,
+        backlinks: Backlinks,
     ) -> Self {
         Self {
             get_available_roots,
             get_graph,
             get_archived,
             get_view,
+            backlinks,
         }
+    }
+
+    pub async fn backlinks(
+        &self,
+        root: &str,
+        user_id: Option<uuid::Uuid>,
+        path: Vec<String>,
+    ) -> anyhow::Result<Vec<backlinks::Hit>> {
+        let res = self
+            .backlinks
+            .execute(backlinks::Request {
+                root: root.into(),
+                user_id,
+                path,
+            })
+            .await?;
+        Ok(res.items)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -119,6 +140,7 @@ impl QuerierExt for SharedState {
             self.get_graph_service(),
             self.get_archived_service(),
             self.get_view_service(),
+            self.backlinks_service(),
         )
     }
 }
