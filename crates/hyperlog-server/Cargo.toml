@@ -17,8 +17,8 @@ serde_json.workspace = true
 uuid.workspace = true
 tonic.workspace = true
 
-tower-http = { version = "0.6.0", features = ["cors", "trace"] }
-sqlx = { version = "0.8.0", features = [
+tower-http = { version = "0.7.0", features = ["cors", "trace"] }
+sqlx = { version = "0.9.0", features = [
   "runtime-tokio",
   "tls-rustls",
   "postgres",
@@ -28,12 +28,12 @@ sqlx = { version = "0.8.0", features = [
 
 # auth
 argon2 = { version = "0.5", features = ["std"] }
-jsonwebtoken = "9"
-rand = "0.8"
+jsonwebtoken = "11"
+rand = "0.10"
 sha2.workspace = true
 hex.workspace = true
 time = { version = "0.3", features = ["serde"] }
 
 [dev-dependencies]
-similar-asserts = "1.5.0"
+similar-asserts = "2.0.0"
 tempfile = "3.10.1"
