@@ -33,8 +33,9 @@ steps:
         from_secret: registry_token
       build_args:
         - CARGO_NET_GIT_FETCH_WITH_CLI=true
-        # sccache backend lives on the homelab VLAN — see Dockerfile.
-        - SCCACHE_MEMCACHED_ENDPOINT=tcp://10.0.10.13:11211
+        # No SCCACHE_MEMCACHED_ENDPOINT: its memcached host (clank-sccache)
+        # is retired, so the Dockerfile builds without sccache, as it does
+        # locally. cache_images keeps the dependency layers between builds.
       platforms: linux/${ARCH}
       cache_images:
         - git.kjuulh.io/kjuulh/hyperlog-server:buildcache-${ARCH}
